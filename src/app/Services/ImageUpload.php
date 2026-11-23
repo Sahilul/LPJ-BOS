@@ -61,5 +61,10 @@ final class ImageUpload
         if ($name && is_file(upload_path($name))) {
             @unlink(upload_path($name));
         }
+        if ($name) {
+            foreach (glob(dirname(upload_path($name)) . '/pdf-cache/' . pathinfo($name, PATHINFO_FILENAME) . '-*') ?: [] as $cache) {
+                @unlink($cache);
+            }
+        }
     }
 }
