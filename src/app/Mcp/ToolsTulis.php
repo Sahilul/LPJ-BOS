@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Mcp;
 
+use App\Database;
+use App\ValidationException;
 use App\Services\BelanjaService;
 use App\Services\MutasiService;
 use App\Services\PenerimaanService;
@@ -17,7 +19,9 @@ final class ToolsTulis
 {
     public static function daftar(): array
     {
-        return array_merge(self::penerimaan(), self::mutasi(), self::belanja(), self::rencana());
+        return array_merge(
+            self::penerimaan(), self::mutasi(), self::belanja(), self::rencana(), self::rencanaPendapatan()
+        );
     }
 
     private static function p(string $type, string $desc, array $extra = []): array
@@ -239,6 +243,77 @@ final class ToolsTulis
                     $id = (int) ($a['id'] ?? 0);
                     self::wajibAda(RencanaService::find($id), 'Rencana', $id);
                     RencanaService::delete($id);
+                    return ['ok' => true, 'dihapus' => $id];
+                },
+            ],
+        ];
+    }
+
+    private static function rencanaPendapatan(): array
+    {
+        $cari = fn (int $id): ?array => Database::one('SELECT * FROM rencana_pendapatan WHERE id = ?', [$id]);
+        $dipakai = fn (int $id): int => (int) Database::value(
+            'SELECT COUNT(*) FROM penerimaan WHERE rencana_pendapatan_id = ?', [$id]
+        );
+
+        return [
+            'rencana_pendapatan_simpan' => [
+                'akses' => ApiAuth::TULIS,
+                'deskripsi' => 'Buat (tanpa id) atau ubah (dengan id) rencana/target pendapatan BOSP per tahap. Tahap: '
+                    . implode(', ', array_keys(PenerimaanService::TAHAP)) . '.',
+                'skema' => self::obj([
+                    'id' => self::p('integer', 'Isi untuk mengubah rencana yang sudah ada.'),
+                    'tahun' => self::p('integer', 'Tahun anggaran rencana baru (default tahun default).'),
+                    'tahap' => self::p('string', 'Tahap pendapatan.', ['enum' => array_keys(PenerimaanService::TAHAP)]),
+                    'uraian' => self::p('string', 'Nama rencana, mis. BOSP Reguler Tahap 2.'),
+                    'target_bulan' => self::p('integer', 'Bulan target cair 1-12 (opsional).'),
+                    'target_jumlah' => self::p('number', 'Target jumlah rupiah.'),
+                ], ['tahap', 'uraian', 'target_jumlah']),
+                'handler' => function (array $a) use ($cari, $dipakai): array {
+                    $id = (int) ($a['id'] ?? 0) ?: null;
+                    $lama = $id ? self::wajibAda($cari($id), 'Rencana pendapatan', $id) : null;
+                    $bulan = $a['target_bulan'] ?? null;
+                    $data = [
+                        'tahun' => $lama ? (int) $lama['tahun'] : self::tahunDari(['tahun' => $a['tahun'] ?? null]),
+                        'tahap' => (string) ($a['tahap'] ?? ''),
+                        'uraian' => trim((string) ($a['uraian'] ?? '')),
+                        'target_bulan' => ($bulan === null || $bulan === '') ? null : (int) $bulan,
+                        'target_jumlah' => uang($a['target_jumlah'] ?? 0),
+                    ];
+                    $err = [];
+                    if (!isset(PenerimaanService::TAHAP[$data['tahap']])) {
+                        $err['tahap'] = 'Pilih tahap pendapatan.';
+                    }
+                    if ($data['uraian'] === '') {
+                        $err['uraian'] = 'Nama rencana pendapatan wajib diisi.';
+                    }
+                    if ($data['target_bulan'] !== null && ($data['target_bulan'] < 1 || $data['target_bulan'] > 12)) {
+                        $err['target_bulan'] = 'Bulan target harus 1-12.';
+                    }
+                    if ($data['target_jumlah'] <= 0) {
+                        $err['target_jumlah'] = 'Target pendapatan harus lebih dari nol.';
+                    }
+                    if ($lama && $lama['tahap'] !== $data['tahap'] && $dipakai($id)) {
+                        $err['tahap'] = 'Tahap tidak bisa diubah karena sudah dipasangkan dengan penerimaan.';
+                    }
+                    if ($err) {
+                        throw new ValidationException($err);
+                    }
+                    $id ? Database::update('rencana_pendapatan', $data, $id) : $id = Database::insert('rencana_pendapatan', $data);
+                    return ['ok' => true, 'id' => $id, 'data' => $cari($id)];
+                },
+            ],
+            'rencana_pendapatan_hapus' => [
+                'akses' => ApiAuth::TULIS,
+                'deskripsi' => 'Hapus rencana pendapatan yang belum dipasangkan dengan penerimaan.',
+                'skema' => self::hapusSkema('rencana pendapatan'),
+                'handler' => function (array $a) use ($cari, $dipakai): array {
+                    $id = (int) ($a['id'] ?? 0);
+                    self::wajibAda($cari($id), 'Rencana pendapatan', $id);
+                    if ($dipakai($id)) {
+                        throw new \RuntimeException('Rencana ini sudah dipasangkan dengan penerimaan. Lepaskan pasangannya dulu.');
+                    }
+                    Database::run('DELETE FROM rencana_pendapatan WHERE id = ?', [$id]);
                     return ['ok' => true, 'dihapus' => $id];
                 },
             ],
