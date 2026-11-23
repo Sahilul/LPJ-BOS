@@ -16,7 +16,7 @@ Buka http://localhost:8080 lalu buat akun pertama di halaman setup. Data (databa
 
 1. **Create Project → Create Service → Compose**.
 2. Provider **GitHub** (atau Git: `https://github.com/Sahilul/LPJ-BOS.git`), branch `main`.
-3. **Compose Path**: `./docker-compose.dokploy.yml` → **Deploy**.
+3. **Compose Path**: `./docker-compose.yml` (bawaan) → **Deploy**. File `docker-compose.override.yml` hanya untuk dev lokal dan diabaikan Dokploy.
 4. Tab **Domains** → Add Domain: host mis. `lpj.sekolah.sch.id`, Service Name `app`, Container Port `80`, HTTPS aktif (Let's Encrypt). Arahkan DNS domain (A record) ke IP server.
 5. Buka domain, buat akun pertama.
 

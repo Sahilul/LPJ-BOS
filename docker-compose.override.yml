@@ -1,0 +1,10 @@
+# Khusus pengembangan lokal: otomatis digabung oleh `docker compose up`.
+# Dokploy memakai `-f docker-compose.yml` sehingga file ini diabaikan di server.
+services:
+  app:
+    container_name: lpjbos
+    ports:
+      - "8080:80"
+    volumes:
+      - ./data:/var/www/data
+      - ./src:/var/www/html

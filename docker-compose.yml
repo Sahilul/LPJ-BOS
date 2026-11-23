@@ -1,14 +1,18 @@
+# Compose produksi (Dokploy): kode di dalam image, data di volume lpjbos-data.
+# Dev lokal: docker-compose.override.yml otomatis digabung (port 8080, mount src).
+# Dokploy: tab Domains → Service Name "app", Container Port 80, HTTPS on.
 services:
   app:
     build: .
-    container_name: lpjbos
-    ports:
-      - "8080:80"
+    restart: unless-stopped
+    expose:
+      - "80"
     volumes:
-      - ./data:/var/www/data
-      - ./src:/var/www/html
+      - lpjbos-data:/var/www/data
     environment:
       DB_PATH: /var/www/data/lpjbos.sqlite
       DATA_DIR: /var/www/data
       TZ: Asia/Jakarta
-    restart: unless-stopped
+
+volumes:
+  lpjbos-data:
