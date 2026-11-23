@@ -154,7 +154,7 @@ final class ToolsTulis
                 'akses' => ApiAuth::TULIS,
                 'deskripsi' => 'Catat (tanpa id) atau ubah (dengan id) transaksi belanja dari satu paket rencana. '
                     . 'Paket jenis barang memakai `items` (+ pajak_ppn/pph22/pph23, toko_id); jenis honor/transport memakai `pen`. '
-                    . 'Pajak dihitung otomatis. Ditolak bila melebihi sisa pagu atau saldo kas.',
+                    . 'Pajak dihitung otomatis. Ditolak bila melebihi sisa pagu. Saldo kas boleh minus (belanja sebelum dana cair); kuitansi mencatat tanggal lunas saat dana cair.',
                 'skema' => self::obj([
                     'id' => self::p('integer', 'Isi untuk mengubah data yang sudah ada.'),
                     'rencana_id' => self::p('integer', 'ID paket rencana belanja.'),

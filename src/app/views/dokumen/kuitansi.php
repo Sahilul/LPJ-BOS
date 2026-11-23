@@ -60,6 +60,9 @@ h1 { font-size: 15pt; letter-spacing: 2px; text-align: center; margin: 0 0 1mm; 
       <?php if ($belanja['toko_nama']): ?><div>Penyedia: <?= e($belanja['toko_nama']) ?></div><?php endif; ?>
     <?php endif; ?>
   </div>
+  <table class="meta" style="margin:2mm 0 0">
+    <tr><td>Lunas dibayar</td><td>: <strong><?= $tglLunas ? e(tanggal_indo($tglLunas)) : '................................' ?></strong></td></tr>
+  </table>
   <div style="text-align:right"><?= e($lokasiTanggal) ?></div>
   <table class="signatures">
     <tr>

@@ -53,18 +53,7 @@ final class MutasiService
         if ($data['uraian'] === '' && isset(self::URAIAN[$data['jenis']])) {
             $data['uraian'] = self::URAIAN[$data['jenis']];
         }
-        if ($data['jenis'] === 'setor' && !$err) {
-            $saldo = saldo_kas($data['tgl'], $id)['tunai'];
-            if ($data['jumlah'] > $saldo) {
-                $err['jumlah'] = 'Saldo tunai per tanggal ini hanya ' . rupiah($saldo) . '.';
-            }
-        }
-        if ($data['jenis'] === 'tarik' && !$err) {
-            $saldo = saldo_kas($data['tgl'], $id)['bank'];
-            if ($data['jumlah'] > $saldo) {
-                $err['jumlah'] = 'Saldo bank per tanggal ini hanya ' . rupiah($saldo) . '.';
-            }
-        }
+        // Saldo boleh minus sementara, misalnya tarik tunai sebelum penerimaan dicatat.
         if ($err) {
             throw new ValidationException($err);
         }

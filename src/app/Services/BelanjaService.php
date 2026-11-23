@@ -163,13 +163,8 @@ final class BelanjaService
                 $err['rencana_id'] = 'Melebihi sisa anggaran ' . rupiah($sisa) . ' (transaksi ' . rupiah($data['total']) . ').';
             }
         }
-        if (!$err) {
-            $saldo = saldo_kas($data['tgl'], null, $id)[$data['metode']];
-            if ($data['total'] > $saldo + 0.001) {
-                $err['metode'] = 'Saldo ' . ($data['metode'] === 'tunai' ? 'kas tunai' : 'bank') . ' per ' . tanggal_indo($data['tgl'], true) . ' hanya ' . rupiah($saldo) . '. '
-                    . ($data['metode'] === 'tunai' ? 'Catat tarik tunai dulu di Mutasi kas.' : 'Catat penerimaan dana dulu.');
-            }
-        }
+        // Saldo boleh minus: belanja yang mendahului pencairan dana tetap dicatat,
+        // kuitansinya menampilkan tanggal lunas saat dana cair (lihat tgl_lunas()).
         if ($err) {
             throw new ValidationException($err, 'Belanja belum disimpan. Periksa isian yang ditandai.');
         }

@@ -619,11 +619,12 @@
 
       let msg = '';
       if (sisa !== null && total > sisa + 0.001) msg = `Melebihi sisa pagu ${rp(sisa)}. Kurangi rincian atau pilih rencana lain.`;
-      else if (total > saldo + 0.001) msg = m === 'tunai' ? `Saldo tunai hanya ${rp(saldo)}. Catat tarik tunai dulu, atau bayar lewat bank.` : `Saldo bank hanya ${rp(saldo)}.`;
+      const bad = !!msg;
+      if (!msg && total > saldo + 0.001) msg = `Saldo ${m === 'tunai' ? 'tunai' : 'bank'} saat ini ${rp(saldo)}, jadi BKU akan minus. Tetap bisa disimpan; tanggal lunas di kuitansi mengikuti tanggal dana cair.`;
       const box = out('msg');
       box.textContent = msg;
       box.hidden = !msg;
-      box.classList.toggle('is-bad', !!msg);
+      box.classList.toggle('is-bad', bad);
       bar.parentElement.classList.toggle('is-bad', sisa !== null && total > sisa + 0.001);
       bar.parentElement.classList.toggle('is-full', sisa !== null && Math.abs(total - sisa) < 0.001 && total > 0);
     };

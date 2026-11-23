@@ -89,6 +89,7 @@ final class DokumenController
             'kepala' => Pdf::official($kepala),
             'bendahara' => Pdf::official($bendahara),
             'tanggal' => tanggal_indo($belanja['tgl']),
+            'tglLunas' => tgl_lunas($belanja['tgl'], (string) $belanja['metode']),
             'lokasiTanggal' => trim(($s['kabupaten'] ?? '') . ', ' . tanggal_indo($belanja['tgl']), ', '),
             'jenisLabel' => $belanja['jenis'] === 'honor' ? 'Honor' : ($belanja['jenis'] === 'transport' ? 'Transport' : 'Belanja barang/jasa'),
         ];

@@ -388,6 +388,33 @@ function saldo_kas(string $tgl, ?int $kecualiMutasi = null, ?int $kecualiBelanja
     return ['tunai' => round((float) $tunai, 2), 'bank' => round((float) $bank, 2), 'total' => round((float) ($tunai + $bank), 2)];
 }
 
+/**
+ * Tanggal belanja dianggap lunas dibayar: tanggal transaksi bila saldo kas
+ * (sesuai metode) per tanggal itu tidak minus; bila minus, tanggal pertama
+ * sesudahnya saat dana cair (penerimaan/mutasi) membuat saldo tidak minus lagi.
+ * Null bila sampai akhir tahun saldo masih minus.
+ */
+function tgl_lunas(string $tgl, string $metode): ?string
+{
+    $metode = $metode === 'tunai' ? 'tunai' : 'bank';
+    if (saldo_kas($tgl)[$metode] > -0.005) {
+        return $tgl;
+    }
+    $akhir = substr($tgl, 0, 4) . '-12-31';
+    $tanggal = App\Database::all(
+        'SELECT tgl FROM penerimaan WHERE tgl > ? AND tgl <= ?
+         UNION SELECT tgl FROM mutasi_kas WHERE tgl > ? AND tgl <= ?
+         ORDER BY tgl',
+        [$tgl, $akhir, $tgl, $akhir]
+    );
+    foreach (array_column($tanggal, 'tgl') as $d) {
+        if (saldo_kas($d)[$metode] > -0.005) {
+            return $d;
+        }
+    }
+    return null;
+}
+
 /** Nomor bukti BKU berikutnya; nomor akhir mengikuti urutan tanggal semua transaksi tahun berjalan. */
 function no_bukti_berikut(string $tgl): string
 {
