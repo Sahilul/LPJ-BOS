@@ -415,37 +415,36 @@ function tgl_lunas(string $tgl, string $metode): ?string
     return null;
 }
 
-/** Nomor bukti BKU berikutnya; nomor akhir mengikuti urutan tanggal semua transaksi tahun berjalan. */
-function no_bukti_berikut(string $tgl): string
+/**
+ * Prefix nomor bukti per jenis transaksi, masing-masing punya urutan sendiri:
+ * BKM = Bukti Kas Masuk (penerimaan), BKK = Bukti Kas Keluar (belanja),
+ * MUT = mutasi kas tunai/bank (tarik tunai, setor).
+ */
+const NOMOR_BUKTI_PREFIX = ['trm' => 'BKM', 'bel' => 'BKK', 'mut' => 'MUT'];
+const NOMOR_BUKTI_TABEL = ['trm' => 'penerimaan', 'bel' => 'belanja', 'mut' => 'mutasi_kas'];
+
+/** Nomor bukti berikutnya untuk jenis (trm/bel/mut); nomor akhir disusun ulang menurut tanggal. */
+function no_bukti_berikut(string $tgl, string $jenis): string
 {
     $tahun = substr($tgl, 0, 4);
     $count = (int) App\Database::value(
-        "SELECT COUNT(*) FROM (
-            SELECT id FROM penerimaan WHERE strftime('%Y', tgl) = ?
-            UNION ALL SELECT id FROM belanja WHERE strftime('%Y', tgl) = ?
-            UNION ALL SELECT id FROM mutasi_kas WHERE strftime('%Y', tgl) = ?
-        )",
-        [$tahun, $tahun, $tahun]
+        'SELECT COUNT(*) FROM ' . NOMOR_BUKTI_TABEL[$jenis] . " WHERE strftime('%Y', tgl) = ?",
+        [$tahun]
     );
-    return sprintf('BKU-%03d/%s/%s', $count + 1, substr($tgl, 5, 2), $tahun);
+    return sprintf('%s-%03d/%s/%s', NOMOR_BUKTI_PREFIX[$jenis], $count + 1, substr($tgl, 5, 2), $tahun);
 }
 
-/** Rebuild the shared BKU number sequence in chronological order for one year. */
+/** Susun ulang nomor bukti satu tahun: urutan terpisah untuk penerimaan (BKM), belanja (BKK), dan mutasi (MUT). */
 function susun_nomor_bukti_bku(int $tahun): void
 {
-    $rows = App\Database::all(
-        "SELECT * FROM (
-            SELECT 'trm' AS src, id, tgl FROM penerimaan
-            UNION ALL SELECT 'bel', id, tgl FROM belanja
-            UNION ALL SELECT 'mut', id, tgl FROM mutasi_kas
-        )
-        WHERE strftime('%Y', tgl) = ?
-        ORDER BY tgl, CASE src WHEN 'trm' THEN 0 WHEN 'mut' THEN 1 ELSE 2 END, id",
-        [(string) $tahun]
-    );
-    $tables = ['trm' => 'penerimaan', 'bel' => 'belanja', 'mut' => 'mutasi_kas'];
-    foreach ($rows as $index => $row) {
-        $nomor = sprintf('BKU-%03d/%s/%d', $index + 1, substr($row['tgl'], 5, 2), $tahun);
-        App\Database::run('UPDATE ' . $tables[$row['src']] . ' SET no_bukti = ? WHERE id = ?', [$nomor, (int) $row['id']]);
+    foreach (NOMOR_BUKTI_TABEL as $jenis => $tabel) {
+        $rows = App\Database::all(
+            'SELECT id, tgl FROM ' . $tabel . " WHERE strftime('%Y', tgl) = ? ORDER BY tgl, id",
+            [(string) $tahun]
+        );
+        foreach ($rows as $index => $row) {
+            $nomor = sprintf('%s-%03d/%s/%d', NOMOR_BUKTI_PREFIX[$jenis], $index + 1, substr($row['tgl'], 5, 2), $tahun);
+            App\Database::run('UPDATE ' . $tabel . ' SET no_bukti = ? WHERE id = ?', [$nomor, (int) $row['id']]);
+        }
     }
 }

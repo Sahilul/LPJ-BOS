@@ -74,7 +74,7 @@ $penOptions = function (string $selected) use ($penerimaList): string {
           </div>
           <?php
           partial('partials/field', ['name' => 'tgl', 'label' => 'Tanggal', 'type' => 'date', 'value' => old('tgl', $row['tgl'] ?? ''), 'required' => true]);
-          partial('partials/field', ['name' => 'no_bukti', 'label' => 'Nomor bukti BKU', 'value' => !empty($row['id']) ? $row['no_bukti'] : '', 'mono' => true, 'hint' => 'Dibuat otomatis mengikuti urutan tanggal transaksi saat disimpan.', 'extra' => 'readonly']);
+          partial('partials/field', ['name' => 'no_bukti', 'label' => 'Nomor bukti BKU', 'value' => !empty($row['id']) ? $row['no_bukti'] : '', 'mono' => true, 'hint' => 'Dibuat otomatis (BKK = Bukti Kas Keluar) mengikuti urutan tanggal belanja saat disimpan.', 'extra' => 'readonly']);
           ?>
           <div class="field">
             <label for="f-jumlah_periode">Jumlah periode (bulan)<span class="req" aria-hidden="true">*</span></label>

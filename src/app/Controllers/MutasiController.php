@@ -25,7 +25,7 @@ final class MutasiController
     {
         $jenis = isset(self::JENIS[$_GET['jenis'] ?? '']) ? $_GET['jenis'] : 'tarik';
         $tgl = tgl_default();
-        $this->form(['tgl' => $tgl, 'no_bukti' => no_bukti_berikut($tgl), 'jenis' => $jenis, 'uraian' => self::URAIAN[$jenis]]);
+        $this->form(['tgl' => $tgl, 'no_bukti' => no_bukti_berikut($tgl, 'mut'), 'jenis' => $jenis, 'uraian' => self::URAIAN[$jenis]]);
     }
 
     public function edit(string $id): void

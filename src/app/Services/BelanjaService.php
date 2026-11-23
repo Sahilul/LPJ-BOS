@@ -174,7 +174,7 @@ final class BelanjaService
     public static function create(array $data, array $children): int
     {
         return Database::transaction(function () use ($data, $children) {
-            $data['no_bukti'] = $data['no_bukti'] !== '' ? $data['no_bukti'] : no_bukti_berikut($data['tgl']);
+            $data['no_bukti'] = $data['no_bukti'] !== '' ? $data['no_bukti'] : no_bukti_berikut($data['tgl'], 'bel');
             $id = Database::insert('belanja', $data);
             self::saveChildren($id, $children);
             susun_nomor_bukti_bku((int) substr($data['tgl'], 0, 4));

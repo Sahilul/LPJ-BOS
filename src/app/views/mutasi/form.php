@@ -17,7 +17,7 @@ $saldo = saldo_kas($row['tgl'] ?? tgl_default(), $edit ? (int) $row['id'] : null
     <?php
     partial('partials/field', ['name' => 'jenis', 'label' => 'Jenis mutasi', 'type' => 'select', 'options' => MutasiController::JENIS, 'value' => old('jenis', $row['jenis'] ?? 'tarik'), 'required' => true, 'span2' => true]);
     partial('partials/field', ['name' => 'tgl', 'label' => 'Tanggal', 'type' => 'date', 'value' => old('tgl', $row['tgl'] ?? ''), 'required' => true]);
-    partial('partials/field', ['name' => 'no_bukti', 'label' => 'Nomor bukti BKU', 'value' => !empty($row['id']) ? $row['no_bukti'] : '', 'mono' => true, 'extra' => 'readonly', 'hint' => 'Dibuat otomatis mengikuti urutan tanggal transaksi saat disimpan.']);
+    partial('partials/field', ['name' => 'no_bukti', 'label' => 'Nomor bukti BKU', 'value' => !empty($row['id']) ? $row['no_bukti'] : '', 'mono' => true, 'extra' => 'readonly', 'hint' => 'Dibuat otomatis (MUT = mutasi kas) mengikuti urutan tanggal mutasi saat disimpan.']);
     partial('partials/field', ['name' => 'uraian', 'label' => 'Uraian', 'value' => old('uraian', $row['uraian'] ?? ''), 'span2' => true]);
     partial('partials/field', ['name' => 'jumlah', 'label' => 'Jumlah', 'type' => 'money', 'value' => old('jumlah', $row['jumlah'] ?? ''), 'required' => true]);
     ?>

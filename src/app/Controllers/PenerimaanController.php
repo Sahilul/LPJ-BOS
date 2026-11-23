@@ -32,7 +32,7 @@ final class PenerimaanController
         $n = (int) Database::value("SELECT COUNT(*) FROM penerimaan WHERE strftime('%Y', tgl) = ?", [(string) $tahun]);
         $row = [
             'tgl' => tgl_default(),
-            'no_bukti' => no_bukti_berikut(tgl_default()),
+            'no_bukti' => no_bukti_berikut(tgl_default(), 'trm'),
             'uraian' => 'Penerimaan Dana BOSP Reguler ' . ($n === 0 ? 'Tahap 1' : 'Tahap 2') . " Tahun $tahun",
             'tahap' => $n === 0 ? 'Tahap 1' : 'Tahap 2',
             'rencana_pendapatan_id' => '',

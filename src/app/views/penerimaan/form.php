@@ -12,7 +12,7 @@
   <div class="card-body form-grid">
     <?php
     partial('partials/field', ['name' => 'tgl', 'label' => 'Tanggal diterima', 'type' => 'date', 'value' => old('tgl', $row['tgl'] ?? ''), 'required' => true]);
-    partial('partials/field', ['name' => 'no_bukti', 'label' => 'Nomor bukti BKU', 'value' => !empty($row['id']) ? $row['no_bukti'] : '', 'mono' => true, 'extra' => 'readonly', 'hint' => 'Dibuat otomatis mengikuti urutan tanggal transaksi saat disimpan.']);
+    partial('partials/field', ['name' => 'no_bukti', 'label' => 'Nomor bukti BKU', 'value' => !empty($row['id']) ? $row['no_bukti'] : '', 'mono' => true, 'extra' => 'readonly', 'hint' => 'Dibuat otomatis (BKM = Bukti Kas Masuk) mengikuti urutan tanggal penerimaan saat disimpan.']);
     ?>
     <div class="field span-2">
       <label for="f-rencana_pendapatan_id">Pasangkan dengan rencana pendapatan <span class="muted small">(opsional)</span></label>
