@@ -22,7 +22,11 @@ final class Http
         }
         if ($method !== 'POST') {
             // Server tidak membuka aliran SSE.
-            self::json(405, ['jsonrpc' => '2.0', 'id' => null, 'error' => ['code' => -32000, 'message' => 'Gunakan POST.']]);
+            self::json(405, ['jsonrpc' => '2.0', 'id' => null, 'error' => [
+                'code' => -32000,
+                'message' => 'Gunakan POST.',
+                'data' => ['jumlah_tool' => count(Registry::semua())],
+            ]]);
             return;
         }
 
