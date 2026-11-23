@@ -376,9 +376,9 @@ func init() {
 				kartus = append(kartus, kartu{o.K, o.V, aktif[o.K]})
 			}
 			type baris struct {
-				R      Row
-				Label  string
-				Aktif  bool
+				R     Row
+				Label string
+				Aktif bool
 			}
 			list := []baris{}
 			for _, r := range rows {

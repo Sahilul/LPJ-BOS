@@ -1,0 +1,42 @@
+{{$C := .C}}{{$p := .p}}{{$d := .data}}<div class="page-head">
+  <div>
+    <h1>{{.nama}}</h1>
+    <p class="lead">{{$p.S "label"}} · <a href="/laporan?{{.q}}">Kembali ke daftar laporan</a></p>
+  </div>
+  <div class="actions">
+    <a class="btn btn-ghost" href="/laporan/{{.jenis}}?{{.q}}&amp;format=xlsx">{{icon "download" 16}}Excel</a>
+    <a class="btn" href="/laporan/{{.jenis}}?{{.q}}&amp;format=pdf" target="_blank" rel="noopener">{{icon "file" 16}}Cetak PDF</a>
+  </div>
+</div>
+
+{{if .summary}}
+  <div class="grid grid-4" style="margin-bottom:18px">
+    {{range .summary}}
+      <div class="card stat"><span class="label">{{.Label}}</span><span class="value mono" style="display:block">{{.Value}}</span></div>
+    {{end}}
+  </div>
+{{end}}
+
+<div class="card">
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr>
+        {{range .headers}}<th{{if .Num}} class="num"{{end}}>{{.Label}}</th>{{end}}
+      </tr></thead>
+      <tbody>
+        {{if not .rows}}
+          <tr><td colspan="{{len .headers}}" class="muted">Tidak ada data pada periode ini.</td></tr>
+        {{end}}
+        {{range .rows}}
+          <tr{{if or (eq .Class "group") (eq .Class "sub")}} class="group-row"{{else if eq .Class "info"}} class="is-off"{{end}}>
+            {{range .Cells}}<td{{if .Num}} class="num mono"{{else if .Mono}} class="mono"{{end}}>{{.Text}}</td>{{end}}
+          </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{{if eq .jenis "kas"}}
+  <p class="muted small" style="margin-top:12px">Versi PDF menyertakan Berita Acara Pemeriksaan Kas dengan tanda tangan kepala sekolah dan bendahara.</p>
+{{end}}
