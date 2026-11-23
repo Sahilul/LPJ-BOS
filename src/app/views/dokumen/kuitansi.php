@@ -20,6 +20,7 @@ $kota = (string) ($sekolah['kabupaten'] ?? '');
 @page { margin: 12mm 14mm; }
 body { font-family: "Times New Roman", Times, serif; font-size: 12pt; color: #111; line-height: 1.35; }
 .lembar { border: 1.2pt solid #222; padding: 6mm 8mm 5mm; }
+.lembar.berkop { border-top: 0; padding-top: 2mm; }
 .kop { width: 100%; max-height: 24mm; margin-bottom: 4mm; }
 h1 { font-size: 15pt; text-align: center; text-decoration: underline; letter-spacing: .5pt; margin: 0 0 6mm; }
 .data { width: 100%; border-collapse: collapse; }
@@ -46,7 +47,7 @@ h1 { font-size: 15pt; text-align: center; text-decoration: underline; letter-spa
 <body>
 <?php foreach ($receivers as $i => $p): ?>
 <?php if ($kop): ?><img class="kop" src="<?= e($kop) ?>" alt="Kop surat"><?php endif; ?>
-<div class="lembar">
+<div class="lembar<?= $kop ? ' berkop' : '' ?>">
   <h1>KWITANSI / BUKTI PEMBAYARAN</h1>
   <table class="data">
     <tr><td class="l">Tahun Anggaran</td><td class="c">:</td><td class="v"><?= $tahun ?></td></tr>

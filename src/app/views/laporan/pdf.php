@@ -51,7 +51,7 @@ $pageBreak = function () use (&$first): string {
 @page { margin: 14mm 12mm; }
 body { font: 8pt "DejaVu Sans", sans-serif; color: #171717; line-height: 1.35; }
 .kop { width: 100%; max-height: 22mm; object-fit: contain; margin-bottom: 4mm; }
-.school { text-align: center; padding-bottom: 3mm; border-bottom: 2px solid #222; margin-bottom: 5mm; font-size: 9pt; }
+.school { text-align: center; padding-bottom: 3mm; margin-bottom: 5mm; font-size: 9pt; }
 h1 { font-size: 12pt; text-align: center; margin: 0 0 1mm; letter-spacing: .5px; }
 h2 { font-size: 10pt; margin: 6mm 0 2mm; }
 .sub { text-align: center; margin: 0 0 5mm; }

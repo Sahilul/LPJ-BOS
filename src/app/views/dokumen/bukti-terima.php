@@ -1,13 +1,15 @@
-<!doctype html>
+<?php
+$lembaga = preg_match('/^(MA|MTs|MI|RA|Madrasah)\b/i', (string) ($sekolah['nama'] ?? '')) ? 'Madrasah' : 'Sekolah';
+?><!doctype html>
 <html lang="id">
 <head>
 <meta charset="utf-8">
 <style>
-@page { margin: 18mm 15mm; }
-body { font: 9pt "DejaVu Sans", sans-serif; color: #171717; line-height: 1.4; }
-.kop { width: 100%; max-height: 32mm; object-fit: contain; margin-bottom: 7mm; }
-.school { text-align: center; padding-bottom: 4mm; border-bottom: 2px solid #222; margin-bottom: 6mm; }
-h1 { font-size: 14pt; text-align: center; margin: 0 0 2mm; letter-spacing: 1px; }
+@page { margin: 12mm 14mm; }
+body { font-family: "Times New Roman", Times, serif; font-size: 12pt; color: #111; line-height: 1.35; }
+.kop { width: 100%; max-height: 24mm; object-fit: contain; margin-bottom: 4mm; }
+.school { text-align: center; padding-bottom: 4mm; margin-bottom: 6mm; }
+h1 { font-size: 15pt; text-align: center; text-decoration: underline; margin: 0 0 2mm; letter-spacing: .5pt; }
 .sub { text-align: center; margin: 0 0 7mm; }
 .meta { width: 100%; margin-bottom: 5mm; }
 .meta td { padding: 1mm 0; vertical-align: top; }
@@ -23,8 +25,8 @@ table.list { width: 100%; border-collapse: collapse; }
 .signatures td { width: 50%; vertical-align: top; }
 .sig { height: 21mm; }
 .sig img { max-width: 30mm; max-height: 20mm; }
-.name { font-weight: bold; text-decoration: underline; }
-.nip { font-size: 8pt; }
+.name { font-weight: bold; text-decoration: underline; text-transform: uppercase; }
+.nip { font-size: 10pt; }
 </style>
 </head>
 <body>
@@ -71,11 +73,11 @@ table.list { width: 100%; border-collapse: collapse; }
 <div style="text-align:right"><?= e($lokasiTanggal) ?></div>
 <table class="signatures">
   <tr>
-    <td>Mengetahui,<br>Kepala Sekolah<div class="sig"><?php if ($kepala['ttd']): ?><img src="<?= e($kepala['ttd']) ?>" alt="Tanda tangan kepala sekolah"><?php endif; ?></div>
+    <td>Mengetahui,<br>Kepala <?= $lembaga ?><div class="sig"><?php if ($kepala['ttd']): ?><img src="<?= e($kepala['ttd']) ?>" alt="Tanda tangan kepala sekolah"><?php endif; ?></div>
       <div class="name"><?= e($kepala['nama'] ?: '................................') ?></div>
       <?php if ($kepala['nip']): ?><div class="nip">NIP. <?= e($kepala['nip']) ?></div><?php endif; ?>
     </td>
-    <td>Bendahara BOS<div class="sig"><?php if ($stempel): ?><img src="<?= e($stempel) ?>" alt="Stempel sekolah"><?php endif; ?><?php if ($bendahara['ttd']): ?><img src="<?= e($bendahara['ttd']) ?>" alt="Tanda tangan bendahara"><?php endif; ?></div>
+    <td><br>Bendahara <?= $lembaga ?><div class="sig"><?php if ($stempel): ?><img src="<?= e($stempel) ?>" alt="Stempel sekolah"><?php endif; ?><?php if ($bendahara['ttd']): ?><img src="<?= e($bendahara['ttd']) ?>" alt="Tanda tangan bendahara"><?php endif; ?></div>
       <div class="name"><?= e($bendahara['nama'] ?: '................................') ?></div>
       <?php if ($bendahara['nip']): ?><div class="nip">NIP. <?= e($bendahara['nip']) ?></div><?php endif; ?>
     </td>

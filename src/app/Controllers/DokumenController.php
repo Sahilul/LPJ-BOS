@@ -53,7 +53,7 @@ final class DokumenController
 
         ob_start();
         view('dokumen/bukti-terima', $data, null);
-        Pdf::render((string) ob_get_clean(), 'Bukti-Terima-' . $data['belanja']['no_bukti'] . '.pdf', true);
+        Pdf::render((string) ob_get_clean(), 'Bukti-Terima-' . $data['belanja']['no_bukti'] . '.pdf', false);
     }
 
     private function dokumenData(string $id): array

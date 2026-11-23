@@ -76,7 +76,7 @@ $link = fn (array $r) => match ($r['src']) {
               <?php if ($r['src'] === 'bel'): ?>
                 <a class="btn btn-ghost btn-sm" href="/dokumen/belanja/<?= (int) $r['id'] ?>/kuitansi.pdf" target="_blank" rel="noopener">Cetak kuitansi</a>
                 <?php if (in_array($r['jenis'], ['honor', 'transport'], true)): ?>
-                  <a class="btn btn-ghost btn-sm" href="/dokumen/belanja/<?= (int) $r['id'] ?>/bukti-terima.pdf">Unduh bukti terima</a>
+                  <a class="btn btn-ghost btn-sm" href="/dokumen/belanja/<?= (int) $r['id'] ?>/bukti-terima.pdf" target="_blank" rel="noopener">Cetak bukti terima</a>
                 <?php endif; ?>
                 <?php if ((int) $r['lampiran'] > 0): ?>
                   <a class="btn btn-ghost btn-sm" href="/belanja/<?= (int) $r['id'] ?>/edit#lampiran">Lampiran (<?= (int) $r['lampiran'] ?>)</a>
