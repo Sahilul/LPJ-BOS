@@ -19,7 +19,7 @@ final class Registry
             return self::$tools;
         }
         $t = [];
-        foreach ([ToolsBaca::daftar(), ToolsTulis::daftar()] as $grup) {
+        foreach ([ToolsBaca::daftar(), ToolsTulis::daftar(), ToolsMaster::daftar(), ToolsPengaturan::daftar()] as $grup) {
             foreach ($grup as $nama => $tool) {
                 $t[$nama] = $tool;
             }

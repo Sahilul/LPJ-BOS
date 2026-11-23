@@ -101,17 +101,17 @@ final class ToolsBaca
             ],
             'komponen_list' => self::listTool(
                 'Daftar komponen BOSP (kode dan nama).',
-                'SELECT kode, nama, urutan FROM komponen ORDER BY urutan, kode',
+                'SELECT id, kode, nama, urutan FROM komponen ORDER BY urutan, kode',
                 []
             ),
             'rekening_list' => self::listTool(
                 'Daftar kode rekening belanja beserta jenisnya.',
-                'SELECT kode, nama, jenis FROM kode_rekening ORDER BY kode',
+                'SELECT id, kode, nama, jenis FROM kode_rekening ORDER BY kode',
                 []
             ),
             'pajak_list' => self::listTool(
                 'Daftar tarif pajak yang berlaku di aplikasi.',
-                'SELECT kode, nama, tarif, keterangan FROM tarif_pajak ORDER BY kode',
+                'SELECT id, kode, nama, tarif, keterangan FROM tarif_pajak ORDER BY kode',
                 []
             ),
             'toko_list' => [
