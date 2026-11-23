@@ -32,6 +32,7 @@ func belanjaBulanRedirect(tgl string, id int64) string {
 
 func init() {
 	Register(60, func(rt *Router) {
+		rt.Get("/belanja", func(c *Ctx) { c.Redirect("/bku") })
 		rt.Get("/belanja/baru", func(c *Ctx) { belanjaForm(c, nil) })
 		rt.Post("/belanja", func(c *Ctx) {
 			data, anak := belanjaValidated(c, 0)
