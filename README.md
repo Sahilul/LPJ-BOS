@@ -12,6 +12,16 @@ docker compose up -d --build
 
 Buka http://localhost:8080 lalu buat akun pertama di halaman setup. Data (database SQLite dan unggahan) tersimpan di folder `data/` yang tidak ikut ke repository.
 
+## Deploy di Dokploy
+
+1. **Create Project → Create Service → Compose**.
+2. Provider **GitHub** (atau Git: `https://github.com/Sahilul/LPJ-BOS.git`), branch `main`.
+3. **Compose Path**: `./docker-compose.dokploy.yml` → **Deploy**.
+4. Tab **Domains** → Add Domain: host mis. `lpj.sekolah.sch.id`, Service Name `app`, Container Port `80`, HTTPS aktif (Let's Encrypt). Arahkan DNS domain (A record) ke IP server.
+5. Buka domain, buat akun pertama.
+
+Data tersimpan di volume Docker `lpjbos-data`, tetap aman saat redeploy. Cadangkan rutin dari menu **Cadangkan data** atau fitur Volume Backups di Dokploy.
+
 ## Akses AI (MCP)
 
 Aplikasi menyediakan server [Model Context Protocol](https://modelcontextprotocol.io) di `POST /mcp` agar asisten AI (Claude, Copilot, Cursor) bisa membaca dan mencatat data. Buat token di menu **Sistem → Akses AI (MCP)**, lalu tambahkan ke konfigurasi klien:

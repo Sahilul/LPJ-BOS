@@ -16,7 +16,7 @@ foreach (['data_dir', 'upload_dir', 'tmp_dir'] as $dir) {
 $isApi = (parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/') === '/mcp';
 if (!$isApi) {
     session_name('lpjbos');
-    session_set_cookie_params(['httponly' => true, 'samesite' => 'Lax']);
+    session_set_cookie_params(['httponly' => true, 'samesite' => 'Lax', 'secure' => is_https()]);
     session_start();
 }
 

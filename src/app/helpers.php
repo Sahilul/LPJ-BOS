@@ -103,6 +103,15 @@ function redirect(string $to): never
     exit;
 }
 
+/** HTTPS langsung atau di balik reverse proxy (Traefik/Dokploy, Nginx). */
+function is_https(): bool
+{
+    if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+        return true;
+    }
+    return strtolower((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')) === 'https';
+}
+
 function back(string $fallback = '/'): never
 {
     $ref = $_SERVER['HTTP_REFERER'] ?? '';

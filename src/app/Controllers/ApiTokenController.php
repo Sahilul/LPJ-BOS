@@ -22,8 +22,7 @@ final class ApiTokenController
         );
         $baru = $_SESSION['api_token_baru'] ?? null;
         unset($_SESSION['api_token_baru']);
-        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-        $url = $scheme . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost:8080') . '/mcp';
+        $url = (is_https() ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost:8080') . '/mcp';
         view('api/index', ['title' => 'Akses AI (MCP)', 'tokens' => $tokens, 'log' => $log, 'baru' => $baru, 'url' => $url]);
     }
 
