@@ -60,10 +60,12 @@ final class DokumenController
     {
         $tahun = tahun_aktif();
         $belanja = Database::one(
-            'SELECT b.*, t.nama AS toko_nama, t.alamat AS toko_alamat, r.uraian AS rencana_uraian
+            'SELECT b.*, t.nama AS toko_nama, t.alamat AS toko_alamat, r.uraian AS rencana_uraian,
+                r.komponen_kode, r.kegiatan, k.nama AS komponen_nama
              FROM belanja b
              LEFT JOIN toko t ON t.id = b.toko_id
              LEFT JOIN rencana_belanja r ON r.id = b.rencana_id
+             LEFT JOIN komponen k ON k.kode = r.komponen_kode
              WHERE b.id = ? AND b.tgl BETWEEN ? AND ?',
             [(int) $id, "$tahun-01-01", "$tahun-12-31"]
         );
@@ -89,7 +91,12 @@ final class DokumenController
             'kepala' => Pdf::official($kepala),
             'bendahara' => Pdf::official($bendahara),
             'tanggal' => tanggal_indo($belanja['tgl']),
-            'tglLunas' => tgl_lunas($belanja['tgl'], (string) $belanja['metode']),
+            'tglLunas' => $lunas = tgl_lunas($belanja['tgl'], (string) $belanja['metode']),
+            // Tahap dana: penerimaan terakhir sampai tanggal lunas (atau tanggal transaksi).
+            'tahap' => (string) Database::value(
+                "SELECT tahap FROM penerimaan WHERE tgl <= ? AND strftime('%Y', tgl) = ? AND tahap <> '' ORDER BY tgl DESC, id DESC LIMIT 1",
+                [$lunas ?? $belanja['tgl'], substr($belanja['tgl'], 0, 4)]
+            ),
             'lokasiTanggal' => trim(($s['kabupaten'] ?? '') . ', ' . tanggal_indo($belanja['tgl']), ', '),
             'jenisLabel' => $belanja['jenis'] === 'honor' ? 'Honor' : ($belanja['jenis'] === 'transport' ? 'Transport' : 'Belanja barang/jasa'),
         ];

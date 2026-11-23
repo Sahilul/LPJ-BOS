@@ -1,85 +1,100 @@
-<!doctype html>
+<?php
+$namaSekolah = (string) ($sekolah['nama'] ?? '');
+$lembaga = preg_match('/^(MA|MTs|MI|RA|Madrasah)\b/i', $namaSekolah) || stripos((string) ($sekolah['jenjang'] ?? ''), 'M') === 0 ? 'Madrasah' : 'Sekolah';
+$tahun = (int) substr($belanja['tgl'], 0, 4);
+$tahapNo = trim(preg_replace('/^Tahap\s*/i', '', $tahap ?? ''));
+$tglPendek = function (string $d): string {
+    $ts = strtotime($d);
+    return date('j', $ts) . ' ' . substr(bulan_indo((int) date('n', $ts)), 0, 3) . ' ' . date('Y', $ts);
+};
+$uang = fn (float $n): string => 'Rp. ' . number_format($n, 2, ',', '.');
+$desaKec = implode(' / ', array_filter([$sekolah['desa'] ?? '', $sekolah['kecamatan'] ?? '']));
+$komponen = trim(($belanja['komponen_kode'] ?? '') . ' — ' . ($belanja['komponen_nama'] ?? ''), ' —');
+$sumber = 'Dana BOS' . ($tahap ? ' ' . $tahap : '') . ' Tahun ' . $tahun;
+$kota = (string) ($sekolah['kabupaten'] ?? '');
+?><!doctype html>
 <html lang="id">
 <head>
 <meta charset="utf-8">
 <style>
-@page { margin: 12mm 16mm; }
-body { font: 11pt "DejaVu Sans", sans-serif; color: #171717; line-height: 1.5; }
-.kop { width: 100%; max-height: 24mm; object-fit: contain; margin-bottom: 5mm; }
-.school { text-align: center; padding-bottom: 3mm; border-bottom: 2px solid #222; margin-bottom: 5mm; }
-h1 { font-size: 15pt; letter-spacing: 2px; text-align: center; margin: 0 0 1mm; }
-.sub { text-align: center; font-size: 10pt; margin: 0 0 4mm; }
-.meta { width: 100%; border-collapse: collapse; margin-bottom: 7mm; }
-.meta td { padding: .5mm 0; vertical-align: top; }
-.meta td:first-child { width: 34mm; }
-.receipt { border: 1px solid #333; padding: 4mm; margin: 3mm 0; }
-.amount { font-size: 14pt; font-weight: bold; }
-.words { font-style: italic; }
-.detail { margin: 3mm 0 4mm; }
-.signatures { width: 100%; text-align: center; margin-top: 5mm; page-break-inside: avoid; }
-.signatures td { width: 33.33%; vertical-align: top; }
-.sig { height: 12mm; }
-.sig img { max-width: 26mm; max-height: 11mm; }
-.stamp { max-width: 13mm; max-height: 11mm; }
-.name { font-weight: bold; text-decoration: underline; }
-.nip { font-size: 9pt; }
+@page { margin: 12mm 14mm; }
+body { font-family: "Times New Roman", Times, serif; font-size: 12pt; color: #111; line-height: 1.35; }
+.lembar { border: 1.2pt solid #222; padding: 6mm 8mm 5mm; }
+.kop { width: 100%; max-height: 24mm; margin-bottom: 4mm; }
+h1 { font-size: 15pt; text-align: center; text-decoration: underline; letter-spacing: .5pt; margin: 0 0 6mm; }
+.data { width: 100%; border-collapse: collapse; }
+.data td { padding: .6mm 0; vertical-align: top; }
+.data td.l { width: 42mm; }
+.data td.c { width: 6mm; }
+.data td.v { font-weight: bold; }
+.jumlah { display: inline-block; border: 1.4pt solid #222; border-radius: 3mm; padding: 1.5mm 5mm; font-size: 14pt; font-weight: bold; }
+.terbilang { font-style: italic; font-weight: bold; }
+.ket { font-weight: normal; }
+.ttd { width: 100%; border-collapse: collapse; margin-top: 6mm; }
+.ttd td { vertical-align: top; text-align: center; }
+.ruang { height: 17mm; position: relative; }
+.ruang img.sig { max-height: 17mm; max-width: 40mm; }
+.stempel { position: absolute; left: -6mm; top: -8mm; width: 30mm; opacity: .85; }
+.nama { font-weight: bold; text-decoration: underline; text-transform: uppercase; }
+.nama-p { font-weight: bold; text-decoration: underline; }
+.nip { font-size: 10pt; }
+.tgl { text-align: right; margin: 3mm 0 2mm; }
+.lunas { border: 1.4pt solid #b4232a; border-radius: 3mm; color: #b4232a; text-align: center; font-weight: bold; font-size: 13pt; padding: 1.5mm; margin-top: 4mm; }
 .page-break { page-break-after: always; }
-.page-break:last-child { page-break-after: auto; }
 </style>
 </head>
 <body>
 <?php foreach ($receivers as $i => $p): ?>
-  <?php if ($kop): ?>
-    <img class="kop" src="<?= e($kop) ?>" alt="Kop surat <?= e($sekolah['nama'] ?? '') ?>">
-  <?php else: ?>
-    <div class="school">
-      <strong><?= e($sekolah['nama'] ?? '') ?></strong><br>
-      <?= e(implode(', ', array_filter([$sekolah['alamat'] ?? '', $sekolah['desa'] ?? '', $sekolah['kecamatan'] ?? '', $sekolah['kabupaten'] ?? '']))) ?>
-    </div>
-  <?php endif; ?>
-  <h1>KUITANSI</h1>
-  <p class="sub">Tahun Anggaran <?= (int) substr($belanja['tgl'], 0, 4) ?></p>
-  <table class="meta">
-    <tr><td>Nomor</td><td>: <?= e($belanja['no_bukti']) ?></td></tr>
-    <tr><td>Sudah terima dari</td><td>: Bendahara BOS <?= e($sekolah['nama'] ?? '') ?></td></tr>
-    <tr><td>Uang sejumlah</td><td>: <span class="amount"><?= e(rupiah((float) $p['netto'])) ?></span></td></tr>
-    <tr><td>Terbilang</td><td>: <span class="words"><?= e(ucfirst(terbilang((int) $p['netto']))) ?> rupiah</span></td></tr>
+<?php if ($kop): ?><img class="kop" src="<?= e($kop) ?>" alt="Kop surat"><?php endif; ?>
+<div class="lembar">
+  <h1>KWITANSI / BUKTI PEMBAYARAN</h1>
+  <table class="data">
+    <tr><td class="l">Tahun Anggaran</td><td class="c">:</td><td class="v"><?= $tahun ?></td></tr>
+    <?php if ($tahapNo !== ''): ?><tr><td class="l">Tahap</td><td class="c">:</td><td class="v"><?= e($tahapNo) ?></td></tr><?php endif; ?>
+    <tr><td class="l">Nomor Bukti</td><td class="c">:</td><td class="v"><?= e($belanja['no_bukti']) ?></td></tr>
+    <tr><td class="l">Sudah terima dari</td><td class="c">:</td><td class="v">Kepala <?= $lembaga ?></td></tr>
+    <tr><td class="l"><?= $lembaga ?></td><td class="c">:</td><td class="v"><?= e($namaSekolah) ?></td></tr>
+    <?php if ($desaKec !== ''): ?><tr><td class="l">Desa / Kecamatan</td><td class="c">:</td><td class="v"><?= e($desaKec) ?></td></tr><?php endif; ?>
+    <?php if ($kota !== ''): ?><tr><td class="l">Kabupaten</td><td class="c">:</td><td class="v"><?= e($kota) ?></td></tr><?php endif; ?>
+    <?php if (!empty($sekolah['provinsi'])): ?><tr><td class="l">Provinsi</td><td class="c">:</td><td class="v"><?= e($sekolah['provinsi']) ?></td></tr><?php endif; ?>
+    <tr><td class="l" style="padding-top:3mm">Jumlah Uang</td><td class="c" style="padding-top:3mm">:</td><td style="padding-top:1.5mm"><span class="jumlah"><?= e($uang((float) $p['netto'])) ?></span></td></tr>
+    <tr><td class="l" style="padding-top:2mm">Terbilang</td><td class="c" style="padding-top:2mm">:</td><td class="terbilang" style="padding-top:2mm"><?= e(ucfirst(terbilang((int) $p['netto']))) ?> rupiah</td></tr>
+    <tr><td class="l" style="padding-top:2mm">Untuk pembayaran</td><td class="c" style="padding-top:2mm">:</td><td class="v" style="padding-top:2mm">
+      <?= e($belanja['uraian']) ?>
+      <?php if ($komponen !== ''): ?><div class="ket">(<?= e($komponen) ?>)</div><?php endif; ?>
+      <?php if ($belanja['jenis'] !== 'barang' && $receiverCount > 1): ?><div class="ket"><?= $receiverCount ?> orang; rincian pada daftar bukti terima.</div><?php endif; ?>
+      <?php if ((float) $p['pph21'] > 0): ?><div class="ket">Bruto <?= e(rupiah((float) $p['bruto'])) ?>, PPh 21 <?= e(rupiah((float) $p['pph21'])) ?></div><?php endif; ?>
+    </td></tr>
+    <tr><td class="l">Sumber Dana</td><td class="c">:</td><td class="v"><?= e($sumber) ?></td></tr>
   </table>
-  <div class="receipt">
-    <strong>Untuk pembayaran</strong>
-    <div class="detail"><?= e($belanja['uraian']) ?></div>
-    <?php if ($belanja['jenis'] !== 'barang'): ?>
-      <div>Penerima: <strong><?= e($p['nama']) ?></strong><?= $receiverCount > 1 ? ' (' . $receiverCount . ' orang; rincian pada daftar bukti terima)' : (!empty($p['jabatan']) ? ' · ' . e($p['jabatan']) : '') ?></div>
-      <?php if ((float) $p['pph21'] > 0): ?><div>Nilai bruto <?= e(rupiah((float) $p['bruto'])) ?> · PPh 21 <?= e(rupiah((float) $p['pph21'])) ?></div><?php endif; ?>
-    <?php elseif ($items): ?>
-      <table class="meta">
-        <?php foreach ($items as $item): ?>
-          <tr><td><?= e($item['nama']) ?></td><td class="amount"><?= e(rupiah((float) $item['subtotal'])) ?></td></tr>
-        <?php endforeach; ?>
-      </table>
-      <?php if ($belanja['toko_nama']): ?><div>Penyedia: <?= e($belanja['toko_nama']) ?></div><?php endif; ?>
-    <?php endif; ?>
-  </div>
-  <table class="meta" style="margin:2mm 0 0">
-    <tr><td>Lunas dibayar</td><td>: <strong><?= $tglLunas ? e(tanggal_indo($tglLunas)) : '................................' ?></strong></td></tr>
-  </table>
-  <div style="text-align:right"><?= e($lokasiTanggal) ?></div>
-  <table class="signatures">
+
+  <table class="ttd">
     <tr>
-      <td>Mengetahui,<br>Kepala Sekolah<div class="sig"><?php if ($kepala['ttd']): ?><img src="<?= e($kepala['ttd']) ?>" alt="Tanda tangan kepala sekolah"><?php endif; ?></div>
-        <div class="name"><?= e($kepala['nama'] ?: '................................') ?></div>
-        <?php if ($kepala['nip']): ?><div class="nip">NIP. <?= e($kepala['nip']) ?></div><?php endif; ?>
-      </td>
-      <td>Bendahara BOS<div class="sig"><?php if ($stempel): ?><img class="stamp" src="<?= e($stempel) ?>" alt="Stempel sekolah"><?php endif; ?><?php if ($bendahara['ttd']): ?><img src="<?= e($bendahara['ttd']) ?>" alt="Tanda tangan bendahara"><?php endif; ?></div>
-        <div class="name"><?= e($bendahara['nama'] ?: '................................') ?></div>
-        <?php if ($bendahara['nip']): ?><div class="nip">NIP. <?= e($bendahara['nip']) ?></div><?php endif; ?>
-      </td>
-      <td><?= $belanja['jenis'] === 'barang' ? 'Penyedia' : 'Penerima' ?><div class="sig"></div><div class="name"><?= e($p['nama']) ?></div>
+      <td style="width:50%"></td>
+      <td><?= $belanja['jenis'] === 'barang' ? 'Penyedia,' : 'Penerima Uang,' ?><div class="ruang"></div>
+        <div class="nama-p"><?= e($p['nama']) ?></div>
         <?php if (!empty($p['nip'])): ?><div class="nip">NIP. <?= e($p['nip']) ?></div><?php endif; ?>
       </td>
     </tr>
   </table>
-  <?php if ($i < count($receivers) - 1): ?><div class="page-break"></div><?php endif; ?>
+  <div class="tgl"><?= e(trim($kota . ', ' . $tglPendek($belanja['tgl']), ', ')) ?></div>
+  <table class="ttd" style="margin-top:0">
+    <tr>
+      <td style="width:50%">Mengetahui,<br>Kepala <?= $lembaga ?>
+        <div class="ruang"><?php if ($stempel): ?><img class="stempel" src="<?= e($stempel) ?>" alt="Stempel"><?php endif; ?><?php if ($kepala['ttd']): ?><img class="sig" src="<?= e($kepala['ttd']) ?>" alt="TTD kepala"><?php endif; ?></div>
+        <div class="nama"><?= e($kepala['nama'] ?: '................................') ?></div>
+        <?php if ($kepala['nip']): ?><div class="nip">NIP. <?= e($kepala['nip']) ?></div><?php endif; ?>
+      </td>
+      <td><br>Bendahara <?= $lembaga ?>
+        <div class="ruang"><?php if ($bendahara['ttd']): ?><img class="sig" src="<?= e($bendahara['ttd']) ?>" alt="TTD bendahara"><?php endif; ?></div>
+        <div class="nama"><?= e($bendahara['nama'] ?: '................................') ?></div>
+        <?php if ($bendahara['nip']): ?><div class="nip">NIP. <?= e($bendahara['nip']) ?></div><?php endif; ?>
+      </td>
+    </tr>
+  </table>
+  <div class="lunas">LUNAS DIBAYAR — <?= $tglLunas ? e(tanggal_indo($tglLunas)) : '.......................' ?></div>
+</div>
+<?php if ($i < count($receivers) - 1): ?><div class="page-break"></div><?php endif; ?>
 <?php endforeach; ?>
 </body>
 </html>
