@@ -1,0 +1,22 @@
+{{$C := .C}}{{$row := .row}}<div class="page-head">
+  <div>
+    <div class="crumb"><a href="/mutasi">Mutasi kas</a><span aria-hidden="true">/</span><span>{{if .edit}}Ubah{{else}}Baru{{end}}</span></div>
+    <h1>{{if .edit}}Ubah mutasi kas{{else}}Catat mutasi kas{{end}}</h1>
+    <p class="lead">Saldo per {{tglIndo .tglVal}}: tunai <strong class="mono">{{rupiah .saldo.Tunai}}</strong>, bank <strong class="mono">{{rupiah .saldo.Bank}}</strong>.</p>
+  </div>
+</div>
+
+<form class="card" method="post" action="/mutasi{{if .edit}}/{{$row.I "id"}}{{end}}" novalidate style="max-width:860px" data-mutasi="{{.uraianJSON}}">
+  {{$C.CSRFField}}
+  <div class="card-body form-grid">
+    {{$C.Field "name" "jenis" "label" "Jenis mutasi" "type" "select" "options" .jenisOpts "value" .jenisVal "required" true "span2" true}}
+    {{$C.Field "name" "tgl" "label" "Tanggal" "type" "date" "value" .tglVal "required" true}}
+    {{$C.Field "name" "no_bukti" "label" "Nomor bukti BKU" "value" .noBuktiVal "mono" true "extra" "readonly" "hint" "Dibuat otomatis (MUT = mutasi kas) mengikuti urutan tanggal mutasi saat disimpan."}}
+    {{$C.Field "name" "uraian" "label" "Uraian" "value" .uraian "span2" true}}
+    {{$C.Field "name" "jumlah" "label" "Jumlah" "type" "money" "value" .jumlahVal "required" true}}
+  </div>
+  <div class="form-foot">
+    <a class="btn btn-ghost left" href="/mutasi">Batal</a>
+    <button class="btn" type="submit">{{icon "check" 16}}{{if .edit}}Simpan perubahan{{else}}Simpan mutasi{{end}}</button>
+  </div>
+</form>

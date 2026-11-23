@@ -1,0 +1,67 @@
+{{$C := .C}}<div class="page-head">
+  <div>
+    <h1>Pejabat & tanda tangan</h1>
+    <p class="lead">Kepala sekolah dan bendahara yang menandatangani kuitansi dan laporan. Saat pejabat berganti, tambahkan yang baru; dokumen lama tetap memakai pejabat pada tanggalnya.</p>
+  </div>
+  <div class="actions"><a class="btn" href="/pejabat/baru">{{icon "plus" 16}}Tambah pejabat</a></div>
+</div>
+
+<div class="grid grid-2">
+  {{range .kartu}}{{$p := .P}}
+    <div class="card card-pad person">
+      <div>
+        <div class="role">{{.Label}} · aktif</div>
+        {{if $p}}
+          <div class="name">{{$p.S "nama"}}</div>
+          <div class="meta">{{if $p.S "nip"}}NIP <span class="mono">{{$p.S "nip"}}</span>{{else}}Tanpa NIP{{end}}{{if $p.S "pangkat"}} · {{$p.S "pangkat"}}{{end}}</div>
+          <div class="meta">Sejak {{tglIndo ($p.S "mulai")}}</div>
+          <a class="btn btn-ghost btn-sm" style="margin-top:14px" href="/pejabat/{{$p.I "id"}}/edit">{{icon "edit" 14}}Ubah data</a>
+        {{else}}
+          <div class="name muted">Belum diisi</div>
+          <div class="meta">Dibutuhkan untuk tanda tangan kuitansi.</div>
+          <a class="btn btn-sm" style="margin-top:14px" href="/pejabat/baru?peran={{.Peran}}">{{icon "plus" 14}}Isi {{lower .Label}}</a>
+        {{end}}
+      </div>
+      <div class="ttd">
+        {{if and $p ($p.S "ttd_path")}}
+          <img src="{{uploadURL ($p.S "ttd_path")}}" alt="Tanda tangan {{$p.S "nama"}}">
+        {{else}}
+          <span class="placeholder">{{icon "pen" 18}}<br>Tanda tangan<br>belum diunggah</span>
+        {{end}}
+      </div>
+    </div>
+  {{end}}
+</div>
+
+<section class="card" style="margin-top:22px" aria-labelledby="riwayat">
+  <div class="card-head"><div><h2 id="riwayat" style="font-size:18px">Riwayat pejabat</h2><p>Semua kepala dan bendahara yang pernah tercatat.</p></div></div>
+  {{if not .rows}}
+    <div class="empty"><span class="ic-wrap">{{icon "badge" 22}}</span><p>Belum ada pejabat. Mulai dari kepala sekolah.</p></div>
+  {{else}}
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Peran</th><th>Nama</th><th>NIP</th><th>Masa jabatan</th><th>TTD</th><th><span class="sr-only">Aksi</span></th></tr></thead>
+        <tbody>
+          {{range .rows}}{{$r := .R}}
+            <tr id="p{{$r.I "id"}}" class="{{if not .Aktif}}is-off{{end}}">
+              <td>{{.Label}}</td>
+              <td class="primary">{{$r.S "nama"}} {{if .Aktif}}<span class="badge badge-ok">Aktif</span>{{end}}</td>
+              <td class="mono">{{default "—" ($r.S "nip")}}</td>
+              <td>{{tglShort ($r.S "mulai")}} – {{if $r.S "selesai"}}{{tglShort ($r.S "selesai")}}{{else}}sekarang{{end}}</td>
+              <td>{{if $r.S "ttd_path"}}<span class="badge badge-ok">Ada</span>{{else}}<span class="badge badge-warn">Belum</span>{{end}}</td>
+              <td>
+                <div class="row-actions">
+                  <a class="btn btn-ghost btn-icon" href="/pejabat/{{$r.I "id"}}/edit" aria-label="Ubah {{$r.S "nama"}}" title="Ubah">{{icon "edit" 16}}</a>
+                  <form method="post" action="/pejabat/{{$r.I "id"}}/hapus" data-confirm="Hapus {{$r.S "nama"}} dari daftar pejabat?">
+                    {{$C.CSRFField}}
+                    <button class="btn btn-danger btn-icon" type="submit" aria-label="Hapus {{$r.S "nama"}}" title="Hapus">{{icon "trash" 16}}</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+  {{end}}
+</section>

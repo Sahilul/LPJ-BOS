@@ -1,4 +1,4 @@
 data
-src/vendor
+legacy-php
 .git
 *.md

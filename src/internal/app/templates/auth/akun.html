@@ -1,0 +1,21 @@
+<div class="page-head">
+  <div>
+    <h1>Akun</h1>
+    <p class="lead">Nama dan kata sandi untuk masuk ke aplikasi ini.</p>
+  </div>
+</div>
+
+<form class="card" method="post" action="/akun" novalidate style="max-width:760px">
+  {{.C.CSRFField}}
+  <div class="card-body form-grid">
+    {{.C.Field "name" "nama" "label" "Nama" "value" (.C.OldVal "nama" (.user.S "nama")) "required" true}}
+    {{.C.Field "name" "username" "label" "Nama pengguna" "value" (.C.OldVal "username" (.user.S "username")) "required" true "extra" `autocomplete="username"`}}
+    <div class="fieldset-title">Ganti kata sandi <span style="text-transform:none;letter-spacing:0">— kosongkan bila tidak diganti</span></div>
+    {{.C.Field "name" "password_lama" "label" "Kata sandi sekarang" "type" "password" "span2" true "extra" `autocomplete="current-password"`}}
+    {{.C.Field "name" "password" "label" "Kata sandi baru" "type" "password" "hint" "Minimal 8 karakter." "extra" `autocomplete="new-password"`}}
+    {{.C.Field "name" "password2" "label" "Ulangi kata sandi baru" "type" "password" "extra" `autocomplete="new-password"`}}
+  </div>
+  <div class="form-foot">
+    <button class="btn" type="submit">{{icon "check" 16}}Simpan akun</button>
+  </div>
+</form>

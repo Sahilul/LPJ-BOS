@@ -1,0 +1,11 @@
+<h1>Siapkan aplikasi</h1>
+<p class="lead">Sekali saja. Akun ini dipakai bendahara untuk masuk di komputer ini.</p>
+<form method="post" action="/setup" novalidate>
+  {{.C.CSRFField}}
+  {{.C.Field "name" "sekolah" "label" "Nama sekolah" "value" (.C.OldVal "sekolah" "") "required" true "extra" `autocomplete="organization"`}}
+  {{.C.Field "name" "nama" "label" "Nama Anda" "value" (.C.OldVal "nama" "") "required" true "extra" `autocomplete="name"`}}
+  {{.C.Field "name" "username" "label" "Nama pengguna" "value" (.C.OldVal "username" "") "required" true "hint" "Huruf kecil dan angka, tanpa spasi." "extra" `autocomplete="username" autocapitalize="none"`}}
+  {{.C.Field "name" "password" "label" "Kata sandi" "type" "password" "required" true "hint" "Minimal 8 karakter." "extra" `autocomplete="new-password"`}}
+  {{.C.Field "name" "password2" "label" "Ulangi kata sandi" "type" "password" "required" true "extra" `autocomplete="new-password"`}}
+  <button class="btn btn-block" type="submit">Buat akun &amp; mulai {{icon "arrow" 16}}</button>
+</form>

@@ -1,0 +1,144 @@
+{{$C := .C}}{{$row := .row}}<div class="page-head">
+  <div>
+    <div class="crumb"><a href="/rencana">Rencana belanja</a><span aria-hidden="true">/</span><span>{{if .edit}}Ubah paket{{else}}Tambah paket{{end}}</span></div>
+    <h1>{{.head}}</h1>
+    <p class="lead">Satu paket dapat berisi banyak barang atau penerima. Atur jumlah per bulan dan frekuensi; BKU akan mengalikan rinciannya.</p>
+  </div>
+</div>
+
+<form class="card" method="post" action="/rencana{{if .edit}}/{{$row.I "id"}}{{end}}" novalidate style="max-width:980px" data-rencana-paket>
+  {{$C.CSRFField}}
+  <div class="card-body form-grid">
+    {{$C.Field "name" "tahun_tampil" "label" "Tahun anggaran" "value" (str .tahun) "mono" true "extra" "readonly" "hint" .tahunHint}}
+    {{$C.Field "name" "komponen_kode" "label" "Komponen BOSP" "type" "select" "options" .komponen "value" .komponenVal "required" true}}
+
+    <div class="field span-2">
+      <label for="f-rekening_kode">Kode rekening</label>
+      <select class="input" id="f-rekening_kode" name="rekening_kode" data-rekening>
+        <option value="">— Tanpa kode rekening —</option>
+        {{range .rekening}}<option value="{{.S "kode"}}" data-jenis="{{.S "jenis"}}"{{if eq (.S "kode") $.rekeningVal}} selected{{end}}>{{.S "kode"}} · {{.S "nama"}}</option>{{end}}
+      </select>
+      <span class="hint">Kelola daftar rekening di <a href="/rekening">Kode rekening</a>.</span>
+    </div>
+
+    {{$C.Field "name" "kegiatan" "label" "Kegiatan" "value" .kegiatan "hint" "Opsional, sesuai RKAS." "span2" true}}
+    {{$C.Field "name" "uraian" "label" "Nama paket" "value" .uraian "required" true "span2" true "extra" `placeholder="Belanja ATK"`}}
+    {{$C.Field "name" "jenis" "label" "Jenis paket" "type" "select" "options" .jenisOpts "value" .jenis "required" true "extra" "data-jenis-target"}}
+    {{$C.Field "name" "frekuensi_bulan" "label" "Frekuensi (bulan)" "type" "number" "value" .frekuensi "required" true "hint" "Contoh: 6 berarti paket dapat dipakai untuk enam bulan." "extra" `min="1" max="12" step="1" inputmode="numeric" data-frekuensi`}}
+
+    <div class="field span-2" data-paket-only="barang">
+      <label for="f-toko_id">Toko / penyedia bawaan</label>
+      <select class="input" id="f-toko_id" name="toko_id">
+        <option value="">— Pilih nanti di BKU —</option>
+        {{range .toko}}<option value="{{.I "id"}}"{{if eq (str (.I "id")) $.tokoVal}} selected{{end}}>{{.S "nama"}}</option>{{end}}
+      </select>
+      <span class="hint">Bisa diganti saat mencatat nota di BKU.</span>
+    </div>
+
+    <section class="span-2" data-paket-only="barang" aria-labelledby="h-rencana-items">
+      <div class="row-between" style="margin-bottom:10px">
+        <h2 id="h-rencana-items" style="margin:0;font-size:1rem">Barang dalam satu bulan</h2>
+        <span class="muted small">Jumlah dan harga satuan per bulan</span>
+      </div>
+      <div class="rows-editor" data-package-rows="items">
+        <table class="table">
+          <thead><tr><th>Nama barang</th><th style="width:100px">Jumlah</th><th style="width:120px">Satuan</th><th style="width:180px">Harga satuan</th><th class="num" style="width:150px">Subtotal</th><th style="width:52px"><span class="sr-only">Hapus</span></th></tr></thead>
+          <tbody>
+            {{range $i, $it := .items}}
+            <tr>
+              <td data-label="Nama barang"><input class="input" name="items[{{$i}}][nama]" value="{{$it.Nama}}" aria-label="Nama barang" placeholder="Buku tulis" data-item-nama></td>
+              <td data-label="Jumlah"><input class="input mono" name="items[{{$i}}][volume]" value="{{$it.Volume}}" inputmode="decimal" aria-label="Jumlah per bulan" data-vol autocomplete="off"></td>
+              <td data-label="Satuan"><input class="input" name="items[{{$i}}][satuan]" value="{{$it.Satuan}}" aria-label="Satuan" placeholder="buah"></td>
+              <td data-label="Harga satuan"><input class="input mono" name="items[{{$i}}][harga]" value="{{$it.Harga}}" inputmode="numeric" aria-label="Harga satuan" data-money data-harga autocomplete="off"></td>
+              <td class="num mono" data-label="Subtotal" data-sub>Rp0</td>
+              <td><button class="btn btn-ghost btn-icon" type="button" data-row-remove aria-label="Hapus barang">{{icon "trash" 16}}</button></td>
+            </tr>
+            {{end}}
+          </tbody>
+        </table>
+        <template>
+          <tr>
+            <td data-label="Nama barang"><input class="input" name="items[__i__][nama]" aria-label="Nama barang" placeholder="Buku tulis" data-item-nama></td>
+            <td data-label="Jumlah"><input class="input mono" name="items[__i__][volume]" value="1" inputmode="decimal" aria-label="Jumlah per bulan" data-vol autocomplete="off"></td>
+            <td data-label="Satuan"><input class="input" name="items[__i__][satuan]" aria-label="Satuan" placeholder="buah"></td>
+            <td data-label="Harga satuan"><input class="input mono" name="items[__i__][harga]" inputmode="numeric" aria-label="Harga satuan" data-money data-harga autocomplete="off"></td>
+            <td class="num mono" data-label="Subtotal" data-sub>Rp0</td>
+            <td><button class="btn btn-ghost btn-icon" type="button" data-row-remove aria-label="Hapus barang">{{icon "trash" 16}}</button></td>
+          </tr>
+        </template>
+        <div class="rows-foot">
+          <button class="btn btn-ghost" type="button" data-row-add>{{icon "plus" 16}}Tambah barang</button>
+          {{with $C.FieldError "items"}}<span class="error">{{.}}</span>{{end}}
+        </div>
+      </div>
+    </section>
+
+    <section class="span-2" data-paket-only="orang" aria-labelledby="h-rencana-penerima">
+      <div class="row-between" style="margin-bottom:10px">
+        <h2 id="h-rencana-penerima" style="margin:0;font-size:1rem">Penerima dalam satu periode</h2>
+        <a class="btn btn-ghost" href="/penerima/baru" target="_blank" rel="noopener">{{icon "plus" 16}}Penerima baru</a>
+      </div>
+      <div class="rows-editor" data-package-rows="penerima">
+        {{if not .penerimaList}}<p class="alert alert-warn">Database penerima masih kosong. <a href="/penerima/baru">Tambahkan penerima</a> dulu.</p>{{end}}
+        <table class="table">
+          <thead><tr><th>Nama penerima</th><th style="width:100px">Volume</th><th style="width:120px">Satuan</th><th style="width:180px">Tarif</th><th class="num" style="width:150px">Subtotal</th><th style="width:52px"><span class="sr-only">Hapus</span></th></tr></thead>
+          <tbody>
+            {{range $i, $p := .recipients}}
+            <tr>
+              <td data-label="Nama penerima"><select class="input" name="penerima[{{$i}}][penerima_id]" aria-label="Penerima" data-package-person>
+                <option value="">— Pilih penerima —</option>
+                {{range $.penerimaList}}<option value="{{.I "id"}}"{{if eq (str (.I "id")) $p.PenerimaID}} selected{{end}}>{{.S "nama"}}{{if .S "nip"}} · {{.S "nip"}}{{end}}</option>{{end}}
+              </select></td>
+              <td data-label="Volume"><input class="input mono" name="penerima[{{$i}}][volume]" value="{{$p.Volume}}" inputmode="decimal" aria-label="Volume" data-vol autocomplete="off"></td>
+              <td data-label="Satuan"><input class="input" name="penerima[{{$i}}][satuan]" value="{{$p.Satuan}}" aria-label="Satuan" placeholder="OH / OJ"></td>
+              <td data-label="Tarif"><input class="input mono" name="penerima[{{$i}}][tarif]" value="{{$p.Tarif}}" inputmode="numeric" aria-label="Tarif" data-money data-harga autocomplete="off"></td>
+              <td class="num mono" data-label="Subtotal" data-sub>Rp0</td>
+              <td><button class="btn btn-ghost btn-icon" type="button" data-row-remove aria-label="Hapus penerima">{{icon "trash" 16}}</button></td>
+            </tr>
+            {{end}}
+          </tbody>
+        </table>
+        <template>
+          <tr>
+            <td data-label="Nama penerima"><select class="input" name="penerima[__i__][penerima_id]" aria-label="Penerima" data-package-person>
+              <option value="">— Pilih penerima —</option>
+              {{range .penerimaList}}<option value="{{.I "id"}}">{{.S "nama"}}{{if .S "nip"}} · {{.S "nip"}}{{end}}</option>{{end}}
+            </select></td>
+            <td data-label="Volume"><input class="input mono" name="penerima[__i__][volume]" value="1" inputmode="decimal" aria-label="Volume" data-vol autocomplete="off"></td>
+            <td data-label="Satuan"><input class="input" name="penerima[__i__][satuan]" aria-label="Satuan" placeholder="OH / OJ"></td>
+            <td data-label="Tarif"><input class="input mono" name="penerima[__i__][tarif]" inputmode="numeric" aria-label="Tarif" data-money data-harga autocomplete="off"></td>
+            <td class="num mono" data-label="Subtotal" data-sub>Rp0</td>
+            <td><button class="btn btn-ghost btn-icon" type="button" data-row-remove aria-label="Hapus penerima">{{icon "trash" 16}}</button></td>
+          </tr>
+        </template>
+        <div class="rows-foot">
+          <button class="btn btn-ghost" type="button" data-row-add>{{icon "plus" 16}}Tambah penerima</button>
+          {{with $C.FieldError "penerima"}}<span class="error">{{.}}</span>{{end}}
+        </div>
+      </div>
+    </section>
+
+    <div class="field span-2">
+      <span class="label">Pagu keseluruhan</span>
+      <output class="pagu-out mono" data-package-total aria-live="polite">Rp0</output>
+      <span class="hint">Subtotal satu periode × frekuensi. Perubahan paket tidak mengubah rincian transaksi BKU yang sudah tersimpan.</span>
+      {{if and .edit (gt .terpakai 0)}}<span class="hint">Sudah dibelanjakan {{rupiah .terpakai}}; pagu paket tidak boleh lebih kecil dari realisasi.</span>{{end}}
+    </div>
+    <fieldset class="span-2 months">
+      <legend>Jadwal bulan <span class="muted small">(opsional)</span></legend>
+      <div class="months-grid">
+        {{range seq 1 12}}
+          <label class="month-chip">
+            <input type="checkbox" name="jadwal[]" value="{{.}}"{{if index $.jadwal .}} checked{{end}}>
+            <span>{{substr (bulanIndo .) 0 3}}</span>
+          </label>
+        {{end}}
+      </div>
+    </fieldset>
+  </div>
+  <div class="form-foot">
+    <a class="btn btn-ghost left" href="/rencana">Batal</a>
+    {{if not .edit}}<button class="btn btn-ghost" type="submit" name="_lagi" value="1">{{icon "plus" 16}}Simpan & tambah lagi</button>{{end}}
+    <button class="btn" type="submit">{{icon "check" 16}}{{if .edit}}Simpan perubahan{{else}}Simpan paket{{end}}</button>
+  </div>
+</form>

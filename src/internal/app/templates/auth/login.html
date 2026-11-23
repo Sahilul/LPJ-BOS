@@ -1,0 +1,9 @@
+<h1>Masuk</h1>
+<p class="lead">Pilih tahun anggaran yang mau dikerjakan, lalu masuk.</p>
+<form method="post" action="/login" novalidate>
+  {{.C.CSRFField}}
+  {{.C.Field "name" "tahun" "label" "Tahun anggaran" "type" "select" "options" .tahunOptions "value" (.C.OldVal "tahun" .tahunDefault) "required" true "mono" true "hint" "Tahun lain bisa dibuka nanti dari menu Tahun anggaran."}}
+  {{.C.Field "name" "username" "label" "Nama pengguna" "value" (.C.OldVal "username" "") "required" true "extra" `autocomplete="username" autocapitalize="none" autofocus`}}
+  {{.C.Field "name" "password" "label" "Kata sandi" "type" "password" "required" true "extra" `autocomplete="current-password"`}}
+  <button class="btn btn-block" type="submit">Masuk {{icon "arrow" 16}}</button>
+</form>

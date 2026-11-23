@@ -1,0 +1,34 @@
+{{$C := .C}}<section class="card" data-only="barang" aria-labelledby="h-item">
+  <div class="card-head"><h2 id="h-item">Rincian barang / jasa</h2></div>
+  <div class="rows-editor" data-rows="items">
+    <table class="table">
+      <thead><tr><th>Nama barang</th><th style="width:96px">Volume</th><th style="width:110px">Satuan</th><th style="width:170px">Harga satuan</th><th class="num" style="width:140px">Jumlah</th><th style="width:52px"><span class="sr-only">Hapus</span></th></tr></thead>
+      <tbody>
+        {{range $i, $it := .items}}
+        <tr>
+          <td data-label="Nama barang"><input class="input" name="items[{{$i}}][nama]" value="{{$it.Nama}}" aria-label="Nama barang" placeholder="Kertas HVS A4"></td>
+          <td data-label="Volume"><input class="input mono" name="items[{{$i}}][volume]" value="{{$it.Volume}}"{{if $it.PackageVolume}} data-package-volume="{{$it.PackageVolume}}"{{end}} inputmode="decimal" aria-label="Volume" data-vol autocomplete="off"></td>
+          <td data-label="Satuan"><input class="input" name="items[{{$i}}][satuan]" value="{{$it.Satuan}}" aria-label="Satuan" placeholder="rim"></td>
+          <td data-label="Harga satuan"><input class="input mono" name="items[{{$i}}][harga]" value="{{$it.Harga}}" inputmode="numeric" aria-label="Harga satuan" data-money data-harga autocomplete="off"></td>
+          <td class="num mono" data-label="Jumlah" data-sub>0</td>
+          <td><button class="btn btn-ghost btn-icon" type="button" data-row-remove aria-label="Hapus baris">{{icon "trash" 16}}</button></td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+    <template>
+      <tr>
+        <td data-label="Nama barang"><input class="input" name="items[__i__][nama]" aria-label="Nama barang"></td>
+        <td data-label="Volume"><input class="input mono" name="items[__i__][volume]" value="1" inputmode="decimal" aria-label="Volume" data-vol autocomplete="off"></td>
+        <td data-label="Satuan"><input class="input" name="items[__i__][satuan]" aria-label="Satuan"></td>
+        <td data-label="Harga satuan"><input class="input mono" name="items[__i__][harga]" inputmode="numeric" aria-label="Harga satuan" data-money data-harga autocomplete="off"></td>
+        <td class="num mono" data-label="Jumlah" data-sub>0</td>
+        <td><button class="btn btn-ghost btn-icon" type="button" data-row-remove aria-label="Hapus baris">{{icon "trash" 16}}</button></td>
+      </tr>
+    </template>
+    <div class="rows-foot">
+      <button class="btn btn-ghost" type="button" data-row-add>{{icon "plus" 16}}Tambah barang</button>
+      {{with $C.FieldError "items"}}<span class="error">{{.}}</span>{{end}}
+    </div>
+  </div>
+</section>

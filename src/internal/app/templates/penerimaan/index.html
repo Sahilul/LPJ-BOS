@@ -1,0 +1,53 @@
+{{$C := .C}}<div class="page-head">
+  <div>
+    <h1>Penerimaan dana</h1>
+    <p class="lead">Dana BOSP yang masuk ke rekening sekolah tahun {{.tahun}}. Setiap penerimaan tercatat di debit BKU dan menambah saldo bank.</p>
+  </div>
+  <div class="actions">
+    <a class="btn btn-ghost" href="/rencana/pendapatan">{{icon "list" 16}}Rencana pendapatan</a>
+    <a class="btn" href="/penerimaan/baru">{{icon "plus" 16}}Catat penerimaan</a>
+  </div>
+</div>
+
+<div class="card">
+  <form class="toolbar" method="get" action="/penerimaan">
+    {{template "partials/tahun-select" .}}
+    <span class="muted small" style="margin-left:auto">Total diterima <strong class="mono" style="color:var(--p-ink)">{{rupiah .total}}</strong></span>
+  </form>
+  {{if not .rows}}
+    <div class="empty">
+      <div class="ic-wrap">{{icon "inbox" 22}}</div>
+      <h3>Belum ada penerimaan tahun {{.tahun}}</h3>
+      <p>Catat dana Tahap 1 begitu masuk ke rekening, supaya saldo BKU dan belanja bisa berjalan.</p>
+      <a class="btn" href="/penerimaan/baru">{{icon "plus" 16}}Catat penerimaan</a>
+    </div>
+  {{else}}
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Tanggal</th><th>No. bukti</th><th>Uraian</th><th>Tahap</th><th>Rencana pendapatan</th><th class="num">Jumlah</th><th><span class="sr-only">Aksi</span></th></tr></thead>
+        <tbody>
+          {{range .rows}}{{$r := .}}
+          <tr id="row-{{$r.I "id"}}">
+            <td class="mono">{{tglShort ($r.S "tgl")}}</td>
+            <td class="mono">{{$r.S "no_bukti"}}</td>
+            <td class="primary"><a href="/penerimaan/{{$r.I "id"}}/edit">{{$r.S "uraian"}}</a></td>
+            <td><span class="badge badge-accent">{{$r.S "tahap"}}</span></td>
+            <td>{{if $r.S "rencana_uraian"}}{{$r.S "rencana_uraian"}}{{else}}<span class="muted">Belum dipasangkan</span>{{end}}</td>
+            <td class="num">{{rupiah ($r.F "jumlah")}}</td>
+            <td>
+              <div class="row-actions">
+                <a class="btn btn-ghost btn-icon" href="/penerimaan/{{$r.I "id"}}/edit" aria-label="Ubah {{$r.S "uraian"}}">{{icon "edit" 16}}</a>
+                <form method="post" action="/penerimaan/{{$r.I "id"}}/hapus" data-confirm="Hapus penerimaan {{rupiah ($r.F "jumlah")}}?">
+                  {{$C.CSRFField}}
+                  <button class="btn btn-danger btn-icon" type="submit" aria-label="Hapus {{$r.S "uraian"}}">{{icon "trash" 16}}</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+    <div class="table-foot">{{len .rows}} penerimaan · total {{rupiah .total}}</div>
+  {{end}}
+</div>

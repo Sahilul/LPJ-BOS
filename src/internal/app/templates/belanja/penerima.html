@@ -1,0 +1,50 @@
+{{$C := .C}}<section class="card" data-only="orang" aria-labelledby="h-pen">
+  <div class="card-head">
+    <h2 id="h-pen">Daftar penerima</h2>
+    <a class="btn btn-ghost" href="/penerima/baru" target="_blank" rel="noopener">{{icon "plus" 16}}Penerima baru</a>
+  </div>
+  {{if not .penerimaList}}
+    <div class="card-body"><p class="alert alert-warn" style="margin:0">Database penerima masih kosong. <a href="/penerima/baru">Tambahkan penerima</a> atau impor dari Excel dulu.</p></div>
+  {{end}}
+  <div class="rows-editor" data-rows="pen">
+    <table class="table">
+      <thead><tr><th>Penerima</th><th style="width:88px">Volume</th><th style="width:100px">Satuan</th><th style="width:160px">Tarif</th><th class="num" style="width:120px">Bruto</th><th class="num" style="width:110px" data-only="honor">PPh 21</th><th class="num" style="width:120px">Diterima</th><th style="width:52px"><span class="sr-only">Hapus</span></th></tr></thead>
+      <tbody>
+        {{range $i, $p := .pens}}
+        <tr>
+          <td data-label="Penerima"><select class="input" name="pen[{{$i}}][penerima_id]" aria-label="Penerima" data-pen>
+            <option value="">— Pilih penerima —</option>
+            {{range $.penerimaList}}<option value="{{.I "id"}}" data-tarif="{{.F "tarif_default"}}" data-pph="{{.F "pph"}}"{{if eq (str (.I "id")) $p.PenerimaID}} selected{{end}}>{{.S "nama"}}{{if .S "ket"}} — {{.S "ket"}}{{end}}</option>{{end}}
+          </select></td>
+          <td data-label="Volume"><input class="input mono" name="pen[{{$i}}][volume]" value="{{$p.Volume}}"{{if $p.PackageVolume}} data-package-volume="{{$p.PackageVolume}}"{{end}} inputmode="decimal" aria-label="Volume" data-vol autocomplete="off"></td>
+          <td data-label="Satuan"><input class="input" name="pen[{{$i}}][satuan]" value="{{$p.Satuan}}" aria-label="Satuan" placeholder="OJ, OK, OH" data-satuan></td>
+          <td data-label="Tarif"><input class="input mono" name="pen[{{$i}}][tarif]" value="{{$p.Tarif}}" inputmode="numeric" aria-label="Tarif" data-money data-harga autocomplete="off"></td>
+          <td class="num mono" data-label="Bruto" data-sub>0</td>
+          <td class="num mono" data-label="PPh 21" data-only="honor" data-pph>0</td>
+          <td class="num mono" data-label="Diterima" data-netto>0</td>
+          <td><button class="btn btn-ghost btn-icon" type="button" data-row-remove aria-label="Hapus penerima">{{icon "trash" 16}}</button></td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+    <template>
+      <tr>
+        <td data-label="Penerima"><select class="input" name="pen[__i__][penerima_id]" aria-label="Penerima" data-pen>
+          <option value="">— Pilih penerima —</option>
+          {{range .penerimaList}}<option value="{{.I "id"}}" data-tarif="{{.F "tarif_default"}}" data-pph="{{.F "pph"}}">{{.S "nama"}}{{if .S "ket"}} — {{.S "ket"}}{{end}}</option>{{end}}
+        </select></td>
+        <td data-label="Volume"><input class="input mono" name="pen[__i__][volume]" value="1" inputmode="decimal" aria-label="Volume" data-vol autocomplete="off"></td>
+        <td data-label="Satuan"><input class="input" name="pen[__i__][satuan]" value="{{.satDefault}}" aria-label="Satuan" data-satuan></td>
+        <td data-label="Tarif"><input class="input mono" name="pen[__i__][tarif]" inputmode="numeric" aria-label="Tarif" data-money data-harga autocomplete="off"></td>
+        <td class="num mono" data-label="Bruto" data-sub>0</td>
+        <td class="num mono" data-label="PPh 21" data-only="honor" data-pph>0</td>
+        <td class="num mono" data-label="Diterima" data-netto>0</td>
+        <td><button class="btn btn-ghost btn-icon" type="button" data-row-remove aria-label="Hapus penerima">{{icon "trash" 16}}</button></td>
+      </tr>
+    </template>
+    <div class="rows-foot">
+      <button class="btn btn-ghost" type="button" data-row-add>{{icon "plus" 16}}Tambah penerima</button>
+      {{with $C.FieldError "pen"}}<span class="error">{{.}}</span>{{end}}
+    </div>
+  </div>
+</section>

@@ -1,0 +1,64 @@
+<section class="band" aria-labelledby="judul">
+  <div>
+    <p class="muted small">Tahun anggaran <span class="mono">{{.tahun}}</span> · <a href="/tahun">Ganti</a></p>
+    <h1 id="judul" style="margin-top:8px">{{with .s.S "nama"}}{{.}}{{else}}Sekolah Anda{{end}}</h1>
+    <p class="muted" style="margin-top:10px">
+      {{with .s.S "npsn"}}NPSN <span class="mono">{{.}}</span>{{else}}NPSN belum diisi{{end}}
+      {{with .s.S "kabupaten"}} · {{.}}{{end}}
+    </p>
+  </div>
+  <dl class="kv">
+    <dt>Kepala sekolah</dt><dd>{{if .kepala}}{{.kepala.S "nama"}}{{else}}—{{end}}</dd>
+    <dt>Bendahara</dt><dd>{{if .bendahara}}{{.bendahara.S "nama"}}{{else}}—{{end}}</dd>
+  </dl>
+</section>
+
+<div class="split" style="margin-top:18px">
+  <section class="card" aria-labelledby="persiapan">
+    <div class="card-head">
+      <div>
+        <h2 id="persiapan">Persiapan sebelum mencatat</h2>
+        <p>{{.done}} dari {{len .steps}} selesai. Data ini dipakai di setiap kuitansi dan laporan.</p>
+      </div>
+      <span class="badge {{if eq .pct 100}}badge-ok{{else}}badge-accent{{end}} mono">{{.pct}}%</span>
+    </div>
+    <div style="padding:0 24px 4px"><div class="progress" role="progressbar" aria-valuenow="{{.pct}}" aria-valuemin="0" aria-valuemax="100" aria-label="Kemajuan persiapan" style="margin-top:16px"><span style="width:{{.pct}}%"></span></div></div>
+    <ol class="steps" style="margin-top:8px">
+      {{range $i, $st := .steps}}
+        <li>
+          <a class="step{{if $st.Done}} done{{end}}" href="{{$st.Href}}">
+            <span class="dot" aria-hidden="true">{{if $st.Done}}{{icon "check" 14}}{{else}}{{addi $i 1}}{{end}}</span>
+            <span class="t">{{$st.Label}}<span>{{$st.Hint}}</span></span>
+            <span class="sr-only">{{if $st.Done}}Selesai{{else}}Belum{{end}}</span>
+            <span class="go">{{icon "arrow" 16}}</span>
+          </a>
+        </li>
+      {{end}}
+    </ol>
+  </section>
+
+  <div class="stack">
+    <div class="grid grid-2">
+      {{range .stats}}
+        <a class="card stat" href="{{.Href}}">
+          <span class="label">{{icon .Icon 16}}{{.Label}}</span>
+          <span class="value mono" style="display:block">{{angka .N}}</span>
+          <span class="foot">Kelola {{icon "arrow" 14}}</span>
+        </a>
+      {{end}}
+    </div>
+    <section class="card card-pad" aria-labelledby="keu">
+      <div class="split-head">
+        <h3 id="keu">Anggaran {{.tahun}}</h3>
+        <a class="btn btn-sm" href="/belanja/baru">{{icon "plus" 14}}Catat belanja</a>
+      </div>
+      <div class="progress" role="progressbar" aria-valuenow="{{.real}}" aria-valuemin="0" aria-valuemax="100" aria-label="Realisasi belanja" style="margin-top:14px"><span style="width:{{.real}}%"></span></div>
+      <dl class="kv-list kv-end" style="margin-top:14px">
+        <dt>Rencana belanja</dt><dd class="mono"><a href="/rencana">{{rupiah .pagu}}</a></dd>
+        <dt>Realisasi ({{.real}}%)</dt><dd class="mono"><a href="/bku">{{rupiah .realisasi}}</a></dd>
+        <dt>Dana diterima</dt><dd class="mono"><a href="/penerimaan">{{rupiah .diterima}}</a></dd>
+        <dt>{{.saldoLabel}}</dt><dd class="mono"><a href="/mutasi">{{rupiah .saldo}}</a></dd>
+      </dl>
+    </section>
+  </div>
+</div>

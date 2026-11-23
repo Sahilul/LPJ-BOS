@@ -1,0 +1,21 @@
+{{$C := .C}}{{$res := .res}}{{$row := .row}}<div class="page-head">
+  <div>
+    <div class="crumb"><a href="/{{$res.Slug}}">{{$res.Title}}</a><span aria-hidden="true">/</span><span>{{if .edit}}Ubah{{else}}Tambah{{end}}</span></div>
+    <h1>{{.head}}</h1>
+  </div>
+</div>
+
+<form class="card" method="post" action="/{{$res.Slug}}{{if .edit}}/{{$row.I "id"}}{{end}}" novalidate style="max-width:860px">
+  {{$C.CSRFField}}
+  <div class="card-body form-grid">
+    {{range .fields}}{{$C.Field "name" .Name "label" .Label "value" .Value "type" .Type "options" .Options "required" .Required "hint" .Hint "mono" .Mono "span2" .Span2 "extra" .Extra}}
+    {{end}}
+  </div>
+  <div class="form-foot">
+    <a class="btn btn-ghost left" href="/{{$res.Slug}}">Batal</a>
+    {{if not .edit}}
+      <button class="btn btn-ghost" type="submit" name="_lagi" value="1">{{icon "plus" 16}}Simpan & tambah lagi</button>
+    {{end}}
+    <button class="btn" type="submit">{{icon "check" 16}}{{if .edit}}Simpan perubahan{{else}}Simpan {{$res.Singular}}{{end}}</button>
+  </div>
+</form>

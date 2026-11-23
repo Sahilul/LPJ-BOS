@@ -1,0 +1,99 @@
+{{$C := .C}}{{$row := .row}}<div class="page-head">
+  <div>
+    <div class="crumb"><a href="/bku">Buku kas umum</a><span aria-hidden="true">/</span><span>{{if .edit}}{{$row.S "no_bukti"}}{{else}}Catat belanja{{end}}</span></div>
+    <h1>{{if .edit}}Ubah belanja{{else}}Catat belanja{{end}}</h1>
+    <p class="lead">Pilih paket dan jumlah bulan. Kuantitas dikalikan otomatis; sesuaikan harga atau rincian dengan nota aktual.</p>
+  </div>
+</div>
+
+<form class="belanja-form" method="post" action="/belanja{{if .edit}}/{{$row.I "id"}}{{end}}" novalidate data-belanja{{if .edit}} data-edit="1"{{end}}
+      data-saldo-tunai="{{.saldo.Tunai}}" data-saldo-bank="{{.saldo.Bank}}"
+      data-tarif-ppn="{{.tarif.PPN}}" data-tarif-pph22="{{.tarif.PPH22}}" data-tarif-pph23="{{.tarif.PPH23}}" data-batas="{{.batas}}">
+  {{$C.CSRFField}}
+
+  <div class="belanja-layout">
+    <div class="stack">
+      <section class="card" aria-labelledby="h-umum">
+        <div class="card-head"><h2 id="h-umum">Transaksi</h2></div>
+        <div class="card-body form-grid">
+          <div class="field span-2">
+            <label for="f-rencana_id">Rencana belanja<span class="req" aria-hidden="true">*</span></label>
+            {{$errRencana := $C.FieldError "rencana_id"}}
+            <select class="input" id="f-rencana_id" name="rencana_id" required data-rencana{{if $errRencana}} aria-invalid="true" aria-describedby="f-rencana_id-err"{{end}}>
+              <option value="">— Pilih baris rencana —</option>
+              {{$lk := ""}}{{$open := false}}
+              {{range .rencana}}
+                {{if ne (.S "komponen_kode") $lk}}{{if $open}}</optgroup>{{end}}{{$lk = .S "komponen_kode"}}{{$open = true}}
+                  <optgroup label="Komponen {{.S "komponen_kode"}}">
+                {{end}}
+                <option value="{{.I "id"}}" data-jenis="{{.S "jenis"}}" data-sisa="{{.F "sisa"}}" data-pagu="{{.F "pagu"}}" data-satuan="{{.S "satuan_paket"}}" data-uraian="{{.S "uraian"}}" data-frekuensi="{{.I "frekuensi_bulan"}}" data-periode-sisa="{{.I "periode_sisa"}}" data-toko="{{.I "toko_id"}}" data-paket="{{.S "paket_json"}}"{{if eq (str (.I "id")) $.rencanaVal}} selected{{end}}{{if and (or (le (.F "sisa") 0) (le (.I "periode_sisa") 0)) (ne (str (.I "id")) $.rencanaVal)}} disabled{{end}}>{{.S "uraian"}} · sisa {{rupiah (.F "sisa")}}</option>
+              {{end}}
+              {{if $open}}</optgroup>{{end}}
+            </select>
+            {{if $errRencana}}<span class="error" id="f-rencana_id-err">{{$errRencana}}</span>
+            {{else if not .rencana}}<span class="hint">Belum ada rencana untuk tahun ini. <a href="/rencana/baru">Tambah rencana belanja</a> dulu.</span>{{end}}
+          </div>
+          {{$C.Field "name" "tgl" "label" "Tanggal" "type" "date" "value" .tglVal "required" true}}
+          {{$C.Field "name" "no_bukti" "label" "Nomor bukti BKU" "value" .noBuktiVal "mono" true "hint" "Dibuat otomatis (BKK = Bukti Kas Keluar) mengikuti urutan tanggal belanja saat disimpan." "extra" "readonly"}}
+          <div class="field">
+            <label for="f-jumlah_periode">Jumlah periode (bulan)<span class="req" aria-hidden="true">*</span></label>
+            <input class="input mono" id="f-jumlah_periode" type="number" name="jumlah_periode" value="{{.periode}}" min="1" max="12" step="1" required inputmode="numeric" data-periode>
+            <span class="hint" data-periode-hint>{{if .selRencana}}Maksimal {{.selRencana.I "periode_sisa"}} bulan tersisa.{{else}}Pilih jumlah bulan yang dibelanjakan dalam nota ini.{{end}}</span>
+            {{with $C.FieldError "jumlah_periode"}}<span class="error">{{.}}</span>{{end}}
+          </div>
+          {{$C.Field "name" "uraian" "label" "Uraian" "value" .uraian "required" true "span2" true "extra" `data-uraian placeholder="Belanja ATK bulan Januari"`}}
+          {{$C.Field "name" "metode" "label" "Dibayar dari" "type" "select" "options" .metodeOpts "value" .metodeVal "extra" "data-metode"}}
+          <div class="field" data-only="barang">
+            <label for="f-toko_id">Toko / penyedia</label>
+            <select class="input" id="f-toko_id" name="toko_id" data-toko>
+              <option value="" data-pkp="0">— Tanpa toko —</option>
+              {{range .toko}}<option value="{{.I "id"}}" data-pkp="{{.I "pkp"}}"{{if eq (str (.I "id")) $.tokoVal}} selected{{end}}>{{.S "nama"}}{{if .I "pkp"}} (PKP){{end}}</option>{{end}}
+            </select>
+          </div>
+        </div>
+      </section>
+
+      {{template "belanja/items" .}}
+
+      <section class="card" data-only="barang" aria-labelledby="h-pajak">
+        <div class="card-head"><h2 id="h-pajak">Pajak dipungut</h2></div>
+        <div class="card-body">
+          <p class="muted small" style="margin:0 0 12px" data-pajak-saran>PPN dan PPh 22 berlaku bila toko PKP dan nilai transaksi di atas {{rupiah .batas}}.</p>
+          <div class="tax-list">
+            <label class="check"><input type="checkbox" name="pajak_ppn" value="1" data-pajak="ppn"{{if .chkPPN}} checked{{end}}><span>PPN {{persen .tarif.PPN}}</span><output class="mono" data-pajak-out="ppn">Rp0</output></label>
+            <label class="check"><input type="checkbox" name="pajak_pph22" value="1" data-pajak="pph22"{{if .chkPPH22}} checked{{end}}><span>PPh 22 {{persen .tarif.PPH22}}</span><output class="mono" data-pajak-out="pph22">Rp0</output></label>
+            <label class="check"><input type="checkbox" name="pajak_pph23" value="1" data-pajak="pph23"{{if .chkPPH23}} checked{{end}}><span>PPh 23 {{persen .tarif.PPH23}} (jasa)</span><output class="mono" data-pajak-out="pph23">Rp0</output></label>
+          </div>
+        </div>
+      </section>
+
+      {{template "belanja/penerima" .}}
+    </div>
+
+    <aside class="belanja-side">
+      <div class="card summary" aria-live="polite">
+        <div class="kv"><span>Sisa pagu</span><strong class="mono" data-out="sisa">—</strong></div>
+        <div class="kv"><span>Transaksi ini</span><strong class="mono" data-out="total">Rp0</strong></div>
+        <div class="progress summary-bar"><span data-out="bar" style="width:0%"></span></div>
+        <div class="kv"><span>Sisa setelah transaksi</span><strong class="mono" data-out="after">—</strong></div>
+        <div class="kv" data-only="pajak"><span>Pajak dipungut</span><strong class="mono" data-out="pajak">Rp0</strong></div>
+        <div class="kv"><span>Saldo <span data-out="metode">kas tunai</span></span><strong class="mono" data-out="saldo">—</strong></div>
+        <p class="summary-msg" data-out="msg" hidden></p>
+        {{with $C.FieldError "metode"}}<p class="summary-msg is-bad">{{.}}</p>{{end}}
+      </div>
+      <div class="side-actions">
+        <button class="btn" type="submit" data-submit>{{icon "check" 16}}{{if .edit}}Simpan perubahan{{else}}Simpan belanja{{end}}</button>
+        {{if not .edit}}<button class="btn btn-ghost" type="submit" name="_lagi" value="1">{{icon "plus" 16}}Simpan & catat lagi</button>{{end}}
+        <a class="btn btn-ghost" href="/bku">Batal</a>
+      </div>
+    </aside>
+  </div>
+</form>
+
+{{if .edit}}
+  {{template "belanja/lampiran" .}}
+  <form method="post" action="/belanja/{{$row.I "id"}}/hapus" data-confirm="Hapus belanja {{$row.S "no_bukti"}}? Pagunya akan kembali ke rencana." class="danger-zone">
+    {{$C.CSRFField}}
+    <button class="btn btn-danger" type="submit">{{icon "trash" 16}}Hapus transaksi ini</button>
+  </form>
+{{end}}

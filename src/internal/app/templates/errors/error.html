@@ -1,0 +1,6 @@
+<div class="error-page">
+  <div class="code">Galat {{.code}}</div>
+  <h1>{{if eq .code 404}}Halaman tidak ditemukan{{else if eq .code 419}}Sesi kedaluwarsa{{else}}Terjadi kesalahan{{end}}</h1>
+  <p>{{if .message}}{{.message}}{{else if eq .code 404}}Alamat yang Anda buka tidak ada atau sudah dihapus.{{else}}Muat ulang halaman lalu coba lagi.{{end}}</p>
+  <a class="btn btn-ghost" href="/">{{icon "home" 16}}Kembali ke beranda</a>
+</div>

@@ -1,0 +1,79 @@
+{{$C := .C}}<div class="page-head">
+  <div>
+    <div class="crumb"><a href="/rencana">Rencana</a><span aria-hidden="true">/</span><span>Pendapatan</span></div>
+    <h1>Rencana pendapatan</h1>
+    <p class="lead">Catat target dana per tahap, lalu pasangkan penerimaan aktual untuk melihat realisasi dan selisih tahun {{.tahun}}.</p>
+  </div>
+  <div class="actions">
+    <a class="btn btn-ghost" href="/rencana">{{icon "list" 16}}Rencana belanja</a>
+    <a class="btn" href="/rencana/pendapatan/baru">{{icon "plus" 16}}Tambah target</a>
+  </div>
+</div>
+
+<div class="grid grid-3" style="margin-bottom:18px">
+  <div class="card stat">
+    <span class="label">{{icon "list" 16}}Total target</span>
+    <span class="value mono" style="display:block">{{rupiah .totalTarget}}</span>
+    <span class="foot">{{len .rows}} rencana pendapatan</span>
+  </div>
+  <div class="card stat">
+    <span class="label">{{icon "inbox" 16}}Aktual terpasang</span>
+    <span class="value mono" style="display:block">{{rupiah .totalRealisasi}}</span>
+    <span class="foot">Dipasangkan dengan target</span>
+  </div>
+  <div class="card stat">
+    <span class="label">{{icon "swap" 16}}Belum dipasangkan</span>
+    <span class="value mono" style="display:block">{{rupiah .belumDipetakan}}</span>
+    <span class="foot"><a href="/penerimaan">Buka daftar penerimaan</a></span>
+  </div>
+</div>
+
+<div class="card">
+  {{if not .rows}}
+    <div class="empty">
+      <div class="ic-wrap">{{icon "inbox" 22}}</div>
+      <h3>Belum ada target pendapatan</h3>
+      <p>Tambahkan rencana dana, misalnya BOSP Tahap 1 dan Tahap 2. Penerimaan aktual bisa dipasangkan saat dicatat.</p>
+      <a class="btn" href="/rencana/pendapatan/baru">{{icon "plus" 16}}Tambah target pendapatan</a>
+    </div>
+  {{else}}
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Target</th><th>Bulan</th><th class="num">Direncanakan</th><th class="num">Aktual</th><th class="num">Selisih</th><th><span class="sr-only">Aksi</span></th></tr>
+        </thead>
+        <tbody>
+          {{range .rows}}{{$r := .}}
+          <tr id="row-{{$r.I "id"}}">
+            <td class="primary">
+              <a href="/rencana/pendapatan/{{$r.I "id"}}/edit">{{$r.S "uraian"}}</a>
+              <div class="muted small">
+                <span class="badge badge-accent">{{$r.S "tahap_label"}}</span>
+                {{$r.I "n_penerimaan"}} penerimaan
+              </div>
+            </td>
+            <td>{{if $r.I "target_bulan"}}{{bulanIndo ($r.I "target_bulan")}}{{else}}<span class="muted">Belum ditentukan</span>{{end}}</td>
+            <td class="num mono">{{rupiah ($r.F "target_jumlah")}}</td>
+            <td class="num mono">
+              {{rupiah ($r.F "realisasi")}}
+              <div class="progress" role="progressbar" aria-valuenow="{{$r.I "pct"}}" aria-valuemin="0" aria-valuemax="100" aria-label="Realisasi {{$r.S "uraian"}}"><span style="width:{{$r.I "pct"}}%"></span></div>
+            </td>
+            <td class="num mono"><strong{{if lt ($r.F "selisih") 0}} style="color:var(--bad)"{{end}}>{{rupiah ($r.F "selisih")}}</strong></td>
+            <td>
+              <div class="row-actions">
+                <a class="btn btn-ghost btn-icon" href="/penerimaan/baru?rencana_pendapatan={{$r.I "id"}}" title="Catat penerimaan aktual" aria-label="Catat penerimaan aktual untuk {{$r.S "uraian"}}">{{icon "plus" 16}}</a>
+                <a class="btn btn-ghost btn-icon" href="/rencana/pendapatan/{{$r.I "id"}}/edit" title="Ubah" aria-label="Ubah {{$r.S "uraian"}}">{{icon "edit" 16}}</a>
+                <form method="post" action="/rencana/pendapatan/{{$r.I "id"}}/hapus" data-confirm="Hapus rencana pendapatan “{{$r.S "uraian"}}”?">
+                  {{$C.CSRFField}}
+                  <button class="btn btn-danger btn-icon" type="submit" title="Hapus" aria-label="Hapus {{$r.S "uraian"}}"{{if $r.I "n_penerimaan"}} disabled{{end}}>{{icon "trash" 16}}</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+    <div class="table-foot">Selisih = target − aktual. Penerimaan yang belum dipasangkan tetap tercatat di BKU dan tercantum pada total belum dipasangkan.</div>
+  {{end}}
+</div>

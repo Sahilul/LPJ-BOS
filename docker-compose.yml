@@ -1,5 +1,5 @@
 # Compose produksi (Dokploy): kode di dalam image, data di volume lpjbos-data.
-# Dev lokal: docker-compose.override.yml otomatis digabung (port 8080, mount src).
+# Dev lokal: docker-compose.override.yml otomatis digabung (port 8080, mount ./data).
 # Dokploy: tab Domains → Service Name "app", Container Port 80, HTTPS on.
 services:
   app:

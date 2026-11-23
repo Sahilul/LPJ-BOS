@@ -1,0 +1,111 @@
+{{$C := .C}}{{$res := .res}}<div class="page-head">
+  <div>
+    <h1>{{$res.Title}}</h1>
+    <p class="lead">{{$res.Lead}}</p>
+  </div>
+  <div class="actions">
+    {{if $res.Excel}}<a class="btn btn-ghost" href="/{{$res.Slug}}/ekspor">{{icon "download" 16}}Ekspor Excel</a>{{end}}
+    <a class="btn" href="/{{$res.Slug}}/baru">{{icon "plus" 16}}Tambah {{$res.Singular}}</a>
+  </div>
+</div>
+
+{{if $res.Excel}}
+  <details class="more card" style="margin-bottom:18px"{{if $C.FieldError "berkas"}} open{{end}}>
+    <summary>{{icon "upload" 16}}Impor banyak {{$res.Singular}} sekaligus dari Excel</summary>
+    <div class="card-body" style="padding-top:0">
+      <ol class="muted small" style="margin:0 0 14px;padding-left:18px;line-height:1.8">
+        <li>Unduh <a href="/{{$res.Slug}}/template">template Excel</a>, isi satu baris per orang.</li>
+        <li>Unggah kembali di sini. Baris dengan NIP/NIK yang sudah ada akan diperbarui, sisanya ditambahkan.</li>
+      </ol>
+      <form method="post" action="/{{$res.Slug}}/impor" enctype="multipart/form-data" style="display:flex;gap:10px;flex-wrap:wrap;align-items:stretch">
+        {{$C.CSRFField}}
+        <label class="drop" style="flex:1;min-width:240px">
+          {{icon "file"}}
+          <span>Pilih berkas Excel<br><span class="name" data-empty="atau seret ke sini">atau seret ke sini</span></span>
+          <input type="file" name="berkas" accept=".xlsx,.xls,.csv" required aria-label="Berkas Excel {{$res.Singular}}">
+        </label>
+        <button class="btn" type="submit">{{icon "upload" 16}}Impor data</button>
+      </form>
+      {{with $C.FieldError "berkas"}}<p class="error" style="margin-top:8px">{{.}}</p>{{end}}
+    </div>
+  </details>
+{{end}}
+
+<div class="card">
+  <form class="toolbar" method="get" action="/{{$res.Slug}}" role="search">
+    <label class="search">
+      <span class="sr-only">Cari {{$res.Singular}}</span>
+      {{icon "search" 16}}
+      <input class="input" type="search" name="q" value="{{.q}}" placeholder="{{.searchPh}}">
+    </label>
+    {{if $res.FilterCol}}
+      <label class="sr-only" for="flt-{{$res.FilterCol}}">{{$res.LabelOf $res.FilterCol}}</label>
+      <select class="input" id="flt-{{$res.FilterCol}}" name="{{$res.FilterCol}}" data-autosubmit style="width:auto">
+        <option value="">Semua {{lower ($res.LabelOf $res.FilterCol)}}</option>
+        {{range $res.FilterOpts}}<option value="{{.K}}"{{if eq $.filterVal .K}} selected{{end}}>{{.V}}</option>{{end}}
+      </select>
+    {{end}}
+    {{if $res.Toggle}}
+      <label class="sr-only" for="flt-status">Status</label>
+      <select class="input" id="flt-status" name="status" data-autosubmit style="width:auto">
+        <option value=""{{if eq .status ""}} selected{{end}}>Semua status</option>
+        <option value="aktif"{{if eq .status "aktif"}} selected{{end}}>Aktif</option>
+        <option value="nonaktif"{{if eq .status "nonaktif"}} selected{{end}}>Nonaktif</option>
+      </select>
+    {{end}}
+    <button class="btn btn-ghost" type="submit">Cari</button>
+    {{if .filtered}}<a class="btn btn-ghost" href="/{{$res.Slug}}">{{icon "x" 16}}Hapus filter</a>{{end}}
+  </form>
+
+  {{if not .rows}}
+    <div class="empty">
+      <span class="ic-wrap">{{icon $res.Icon 22}}</span>
+      {{if .filtered}}
+        <h3>Tidak ada yang cocok</h3>
+        <p>Coba kata kunci lain atau hapus filter.</p>
+      {{else}}
+        <h3>Belum ada {{$res.Singular}}</h3>
+        <p>Data ini dipilih saat mencatat transaksi, jadi cukup diisi sekali.</p>
+        <a class="btn" href="/{{$res.Slug}}/baru">{{icon "plus" 16}}Tambah {{$res.Singular}}</a>
+      {{end}}
+    </div>
+  {{else}}
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            {{range .headers}}<th{{if .num}} class="num"{{end}}>{{.label}}</th>{{end}}
+            {{if $res.Toggle}}<th>Status</th>{{end}}
+            <th><span class="sr-only">Aksi</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range .rows}}
+            <tr id="row-{{.R.I "id"}}"{{if .Off}} class="is-off"{{end}}>
+              {{range $i, $cl := .Cells}}<td{{if eq $i 0}} class="primary"{{end}}>{{$cl}}</td>{{end}}
+              {{if $res.Toggle}}<td>{{if .Off}}<span class="badge badge-off">Nonaktif</span>{{else}}<span class="badge badge-ok">Aktif</span>{{end}}</td>{{end}}
+              <td>
+                <div class="row-actions">
+                  <a class="btn btn-ghost btn-icon" href="/{{$res.Slug}}/{{.R.I "id"}}/edit" aria-label="Ubah {{.Label}}" title="Ubah">{{icon "edit" 16}}</a>
+                  {{if $res.Toggle}}
+                    <form method="post" action="/{{$res.Slug}}/{{.R.I "id"}}/aktif">
+                      {{$C.CSRFField}}
+                      <button class="btn btn-ghost btn-icon" type="submit" aria-label="{{if .Off}}Aktifkan{{else}}Nonaktifkan{{end}} {{.Label}}" title="{{if .Off}}Aktifkan{{else}}Nonaktifkan{{end}}">{{icon "power" 16}}</button>
+                    </form>
+                  {{end}}
+                  <form method="post" action="/{{$res.Slug}}/{{.R.I "id"}}/hapus" data-confirm="Hapus “{{.Label}}”?">
+                    {{$C.CSRFField}}
+                    <button class="btn btn-danger btn-icon" type="submit" aria-label="Hapus {{.Label}}" title="Hapus">{{icon "trash" 16}}</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+    <div class="table-foot">
+      Menampilkan <span class="num">{{len .rows}}</span> dari <span class="num">{{.total}}</span> {{$res.Singular}}
+    </div>
+  {{end}}
+</div>

@@ -1,0 +1,81 @@
+<div class="page-head">
+  <div>
+    <h1>Akses AI (MCP)</h1>
+    <p class="lead">Hubungkan asisten AI (Claude, Copilot, Cursor) ke data LPJ BOS lewat Model Context Protocol. Asisten memakai aturan validasi yang sama dengan form di aplikasi ini.</p>
+  </div>
+</div>
+
+{{with .baru}}
+<div class="card card-pad stack" style="--gap:12px;margin-bottom:24px;border-color:var(--p-accent)">
+  <h2 style="font-size:18px">Token “{{index . "nama"}}”</h2>
+  <p class="muted small">Salin sekarang. Token ini tidak akan ditampilkan lagi; bila hilang, cabut lalu buat yang baru.</p>
+  <input class="input mono" readonly value="{{index . "token"}}" onclick="this.select()" aria-label="Token API">
+</div>
+{{end}}
+
+<div class="grid grid-tahun">
+  <div class="stack" style="--gap:24px">
+    <div class="card">
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Nama</th><th>Akses</th><th>Terakhir dipakai</th><th class="num">Panggilan</th><th><span class="sr-only">Aksi</span></th></tr></thead>
+          <tbody>
+            {{$C := .C}}
+            {{range .tokens}}
+            <tr>
+              <td class="primary">{{.S "nama"}}<span class="muted small mono" style="display:block">lpbos_{{.S "prefix"}}_…</span></td>
+              <td>{{if eq (.S "akses") "tulis"}}<span class="badge badge-accent">Baca &amp; tulis</span>{{else}}<span class="badge badge-off">Baca saja</span>{{end}}</td>
+              <td class="small muted">{{with .S "last_used_at"}}{{.}}{{else}}Belum pernah{{end}}</td>
+              <td class="num">{{.I "n_panggil"}}</td>
+              <td>
+                <div class="row-actions">
+                  <form method="post" action="/api/{{.I "id"}}/hapus" data-confirm="Cabut token “{{.S "nama"}}”?">
+                    {{$C.CSRFField}}
+                    <button class="btn btn-danger btn-icon" type="submit" aria-label="Cabut token {{.S "nama"}}">{{icon "trash" 16}}</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {{else}}<tr><td colspan="5" class="muted">Belum ada token.</td></tr>
+            {{end}}
+          </tbody>
+        </table>
+      </div>
+      <div class="table-foot">{{len .tokens}} token</div>
+    </div>
+
+    <div class="card card-pad stack" style="--gap:12px">
+      <h2 style="font-size:18px">Cara menghubungkan</h2>
+      <p class="small">Alamat server: <code class="mono">{{.url}}</code>. Kirim token di header <code class="mono">Authorization: Bearer …</code>. Contoh konfigurasi (VS Code <code>.vscode/mcp.json</code> memakai kunci <code>servers</code>, Claude/Cursor memakai <code>mcpServers</code>):</p>
+      <pre class="mono small" style="white-space:pre-wrap;margin:0;padding:12px;background:var(--p-surface);border-radius:8px">{{.cfg}}</pre>
+    </div>
+
+    <div class="card">
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Waktu</th><th>Token</th><th>Tool</th><th>Hasil</th></tr></thead>
+          <tbody>
+            {{range .log}}
+            <tr>
+              <td class="small muted mono">{{.S "created_at"}}</td>
+              <td class="small">{{if .Null "token_nama"}}(dicabut){{else}}{{.S "token_nama"}}{{end}}</td>
+              <td class="mono small" title="{{.S "args"}}">{{.S "tool"}}</td>
+              <td class="small">{{if truthy (index . "ok")}}<span class="badge badge-ok">OK</span>{{else}}<span class="badge badge-warn">Gagal</span> {{.S "pesan"}}{{end}}</td>
+            </tr>
+            {{else}}<tr><td colspan="4" class="muted">Belum ada aktivitas.</td></tr>
+            {{end}}
+          </tbody>
+        </table>
+      </div>
+      <div class="table-foot">30 aktivitas terakhir</div>
+    </div>
+  </div>
+
+  <form class="card card-pad stack" method="post" action="/api" novalidate style="--gap:16px;align-self:start">
+    {{.C.CSRFField}}
+    <h2 style="font-size:18px">Buat token</h2>
+    {{.C.Field "name" "nama" "label" "Nama" "value" (.C.OldVal "nama" "") "hint" "Mis. “Claude di laptop bendahara”."}}
+    {{.C.Field "name" "akses" "label" "Akses" "type" "select" "value" (.C.OldVal "akses" "baca") "options" .aksesOpts}}
+    <button class="btn" type="submit">{{icon "plus" 16}}Buat token</button>
+  </form>
+</div>

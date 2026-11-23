@@ -2,7 +2,7 @@
 
 Aplikasi web untuk menyusun LPJ/SPJ dana BOSP sekolah: rencana belanja (RKAS), penerimaan dana, transaksi belanja, mutasi kas, Buku Kas Umum, kuitansi/bukti terima, dan laporan PDF/Excel.
 
-Dibangun dengan PHP 8.3 + SQLite, dijalankan lewat Docker.
+Dibangun dengan Go (stdlib `net/http` + `html/template`) dan SQLite, menjadi satu binary tanpa CGO (template, aset, dan migrasi tertanam). Versi PHP lama disimpan di `legacy-php/` sebagai rujukan.
 
 ## Menjalankan
 
@@ -10,7 +10,13 @@ Dibangun dengan PHP 8.3 + SQLite, dijalankan lewat Docker.
 docker compose up -d --build
 ```
 
-Buka http://localhost:8080 lalu buat akun pertama di halaman setup. Data (database SQLite dan unggahan) tersimpan di folder `data/` yang tidak ikut ke repository.
+Atau tanpa Docker (Go 1.26+):
+
+```bash
+cd src && go run ./cmd/lpjbos          # PORT=8080, DATA_DIR=../data bawaan
+```
+
+Buka http://localhost:8080 lalu buat akun pertama di halaman setup. Data (database SQLite dan unggahan) tersimpan di folder `data/` yang tidak ikut ke repository; database dari versi PHP langsung bisa dipakai.
 
 ## Deploy di Dokploy
 

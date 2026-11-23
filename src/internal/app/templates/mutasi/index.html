@@ -1,0 +1,57 @@
+{{$C := .C}}<div class="page-head">
+  <div>
+    <h1>Mutasi kas</h1>
+    <p class="lead">Perpindahan uang antara rekening dan kas tunai, serta bunga dan biaya administrasi bank.</p>
+  </div>
+  <div class="actions">
+    <a class="btn btn-ghost" href="/mutasi/baru?jenis=setor">Setor ke bank</a>
+    <a class="btn" href="/mutasi/baru?jenis=tarik">{{icon "plus" 16}}Tarik tunai</a>
+  </div>
+</div>
+
+<div class="grid grid-3" style="margin-bottom:18px">
+  <div class="card stat"><span class="label">{{icon "wallet" 16}}Kas tunai</span><span class="value mono" style="display:block">{{rupiah .saldo.Tunai}}</span><span class="foot">Saldo akhir tahun {{.tahun}}</span></div>
+  <div class="card stat"><span class="label">{{icon "swap" 16}}Rekening bank</span><span class="value mono" style="display:block">{{rupiah .saldo.Bank}}</span><span class="foot">Saldo akhir tahun {{.tahun}}</span></div>
+  <div class="card stat"><span class="label">{{icon "book" 16}}Total saldo</span><span class="value mono" style="display:block">{{rupiah .saldo.Total}}</span><span class="foot">Sama dengan saldo BKU</span></div>
+</div>
+
+<div class="card">
+  <form class="toolbar" method="get" action="/mutasi">
+    {{template "partials/tahun-select" .}}
+    <span class="muted small" style="margin-left:auto">Catat juga <a href="/mutasi/baru?jenis=bunga">bunga</a> atau <a href="/mutasi/baru?jenis=admin_bank">biaya admin</a></span>
+  </form>
+  {{if not .rows}}
+    <div class="empty">
+      <div class="ic-wrap">{{icon "swap" 22}}</div>
+      <h3>Belum ada mutasi tahun {{.tahun}}</h3>
+      <p>Catat penarikan tunai sebelum membayar belanja secara tunai.</p>
+      <a class="btn" href="/mutasi/baru?jenis=tarik">{{icon "plus" 16}}Tarik tunai</a>
+    </div>
+  {{else}}
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Tanggal</th><th>Jenis</th><th>Uraian</th><th class="num">Jumlah</th><th><span class="sr-only">Aksi</span></th></tr></thead>
+        <tbody>
+          {{range .rows}}{{$r := .}}
+          <tr id="row-{{$r.I "id"}}">
+            <td class="mono">{{tglShort ($r.S "tgl")}}</td>
+            <td><span class="badge {{if eq ($r.S "jenis") "tarik"}}badge-accent{{else if eq ($r.S "jenis") "admin_bank"}}badge-warn{{else if eq ($r.S "jenis") "setor"}}badge-ok{{else}}badge-ok{{end}}">{{$r.S "label"}}</span></td>
+            <td class="primary"><a href="/mutasi/{{$r.I "id"}}/edit">{{$r.S "uraian"}}</a>{{if $r.S "no_bukti"}}<div class="muted small mono">{{$r.S "no_bukti"}}</div>{{end}}</td>
+            <td class="num">{{rupiah ($r.F "jumlah")}}</td>
+            <td>
+              <div class="row-actions">
+                <a class="btn btn-ghost btn-icon" href="/mutasi/{{$r.I "id"}}/edit" aria-label="Ubah mutasi">{{icon "edit" 16}}</a>
+                <form method="post" action="/mutasi/{{$r.I "id"}}/hapus" data-confirm="Hapus mutasi ini?">
+                  {{$C.CSRFField}}
+                  <button class="btn btn-danger btn-icon" type="submit" aria-label="Hapus mutasi">{{icon "trash" 16}}</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+    <div class="table-foot">{{len .rows}} mutasi</div>
+  {{end}}
+</div>

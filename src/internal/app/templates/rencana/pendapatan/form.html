@@ -1,0 +1,22 @@
+{{$C := .C}}{{$row := .row}}<div class="page-head">
+  <div>
+    <div class="crumb"><a href="/rencana/pendapatan">Rencana pendapatan</a><span aria-hidden="true">/</span><span>{{if .edit}}Ubah target{{else}}Tambah target{{end}}</span></div>
+    <h1>{{.head}}</h1>
+    <p class="lead">Masukkan nominal yang diperkirakan diterima. Saat dana benar-benar masuk, pasangkan penerimaan aktual ke target ini.</p>
+  </div>
+</div>
+
+<form class="card" method="post" action="/rencana/pendapatan{{if .edit}}/{{$row.I "id"}}{{end}}" novalidate style="max-width:760px">
+  {{$C.CSRFField}}
+  <div class="card-body form-grid">
+    {{$C.Field "name" "tahun_tampil" "label" "Tahun anggaran" "value" (str .tahun) "mono" true "extra" "readonly" "hint" .tahunHint}}
+    {{$C.Field "name" "tahap" "label" "Sumber / tahap" "type" "select" "options" .tahapOpts "value" .tahapVal "required" true}}
+    {{$C.Field "name" "uraian" "label" "Nama rencana pendapatan" "value" .uraian "required" true "span2" true "extra" `placeholder="Dana BOSP Tahap 1"`}}
+    {{$C.Field "name" "target_bulan" "label" "Perkiraan bulan diterima" "type" "select" "options" .bulanOpts "value" .bulanVal "hint" "Opsional. Isi jika jadwal penerimaan sudah diketahui."}}
+    {{$C.Field "name" "target_jumlah" "label" "Target pendapatan" "type" "money" "value" .jumlahVal "required" true}}
+  </div>
+  <div class="form-foot">
+    <a class="btn btn-ghost left" href="/rencana/pendapatan">Batal</a>
+    <button class="btn" type="submit">{{icon "check" 16}}{{if .edit}}Simpan perubahan{{else}}Simpan target{{end}}</button>
+  </div>
+</form>

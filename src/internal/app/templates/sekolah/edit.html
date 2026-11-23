@@ -1,0 +1,81 @@
+{{$C := .C}}{{$s := .s}}<div class="page-head">
+  <div>
+    <h1>Profil sekolah</h1>
+    <p class="lead">Identitas ini muncul di kuitansi, BKU dan semua laporan. Kop surat, logo dan stempel cukup diunggah sebagai gambar.</p>
+  </div>
+  <div class="actions"><a class="btn btn-ghost" href="#gambar">{{icon "image" 16}}Kop & stempel</a></div>
+</div>
+
+<form class="card" method="post" action="/sekolah" novalidate>
+  {{$C.CSRFField}}
+  <div class="card-body form-grid">
+    <div class="fieldset-title">Identitas</div>
+    {{$C.Field "name" "nama" "label" "Nama sekolah" "value" ($C.OldVal "nama" ($s.S "nama")) "required" true "span2" true}}
+    {{$C.Field "name" "npsn" "label" "NPSN" "value" ($C.OldVal "npsn" ($s.S "npsn")) "mono" true "extra" `inputmode="numeric" maxlength="8"`}}
+    {{$C.Field "name" "jenjang" "label" "Jenjang" "value" ($C.OldVal "jenjang" ($s.S "jenjang")) "type" "select" "options" .jenjang}}
+    {{$C.Field "name" "status" "label" "Status" "value" ($C.OldVal "status" ($s.S "status")) "type" "select" "options" .status}}
+    {{$C.Field "name" "npwp" "label" "NPWP bendahara/sekolah" "value" ($C.OldVal "npwp" ($s.S "npwp")) "mono" true}}
+    {{$C.Field "name" "email" "label" "Surel" "value" ($C.OldVal "email" ($s.S "email")) "type" "email"}}
+
+    <div class="fieldset-title">Alamat</div>
+    {{$C.Field "name" "alamat" "label" "Jalan" "value" ($C.OldVal "alamat" ($s.S "alamat")) "span2" true}}
+    {{$C.Field "name" "desa" "label" "Desa / kelurahan" "value" ($C.OldVal "desa" ($s.S "desa"))}}
+    {{$C.Field "name" "kecamatan" "label" "Kecamatan" "value" ($C.OldVal "kecamatan" ($s.S "kecamatan"))}}
+    {{$C.Field "name" "kabupaten" "label" "Kabupaten / kota" "value" ($C.OldVal "kabupaten" ($s.S "kabupaten")) "hint" "Dipakai sebagai tempat tanda tangan, mis. “Sleman, 5 Januari 2026”."}}
+    {{$C.Field "name" "provinsi" "label" "Provinsi" "value" ($C.OldVal "provinsi" ($s.S "provinsi"))}}
+    {{$C.Field "name" "kode_pos" "label" "Kode pos" "value" ($C.OldVal "kode_pos" ($s.S "kode_pos")) "mono" true}}
+    {{$C.Field "name" "telepon" "label" "Telepon" "value" ($C.OldVal "telepon" ($s.S "telepon"))}}
+
+    <div class="fieldset-title">Rekening BOS</div>
+    {{$C.Field "name" "bank_nama" "label" "Bank" "value" ($C.OldVal "bank_nama" ($s.S "bank_nama"))}}
+    {{$C.Field "name" "bank_rekening" "label" "Nomor rekening" "value" ($C.OldVal "bank_rekening" ($s.S "bank_rekening")) "mono" true}}
+    {{$C.Field "name" "bank_atas_nama" "label" "Atas nama" "value" ($C.OldVal "bank_atas_nama" ($s.S "bank_atas_nama")) "span2" true}}
+  </div>
+  <div class="form-foot">
+    {{if .updated}}<span class="left muted small">Terakhir disimpan {{tglIndo .updated}}</span>{{end}}
+    <button class="btn" type="submit">{{icon "check" 16}}Simpan profil</button>
+  </div>
+</form>
+
+<section id="gambar" style="margin-top:34px;scroll-margin-top:24px" aria-labelledby="judul-gambar">
+  <div class="page-head" style="margin-bottom:18px">
+    <div>
+      <h2 id="judul-gambar">Kop surat, logo & stempel</h2>
+      <p class="lead">PNG atau JPG, paling besar {{.maxMB}} MB. Gambar langsung tersimpan setelah dipilih.</p>
+    </div>
+  </div>
+  <div class="img-grid">
+    {{range .images}}{{$path := $s.S .Col}}
+      <div class="card card-pad img-slot">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+          <h3>{{.Label}}</h3>
+          {{if $path}}<span class="badge badge-ok">{{icon "check" 12}}Terpasang</span>{{else}}<span class="badge badge-off">Belum ada</span>{{end}}
+        </div>
+        <div class="img-frame{{if eq .Jenis "kop"}} wide{{end}}" id="prev-{{.Jenis}}">
+          {{if $path}}
+            <img src="{{uploadURL $path}}" alt="{{.Label}} sekolah">
+          {{else}}
+            <span class="placeholder">{{icon "image" 26}}Belum ada gambar</span>
+          {{end}}
+        </div>
+        <p class="hint">{{.Hint}}</p>
+        {{with $C.FieldError (print "gambar_" .Jenis)}}<span class="error">{{.}}</span>{{end}}
+        <form method="post" action="/sekolah/gambar/{{.Jenis}}" enctype="multipart/form-data">
+          {{$C.CSRFField}}
+          <label class="drop">
+            {{icon "upload"}}
+            <span>{{if $path}}Ganti gambar{{else}}Pilih gambar{{end}}<br><span class="name" data-empty="atau seret ke sini">atau seret ke sini</span></span>
+            <input type="file" name="gambar" accept="image/png,image/jpeg" data-preview="#prev-{{.Jenis}}" data-autosubmit aria-label="Unggah {{lower .Label}}">
+          </label>
+          <noscript><button class="btn btn-sm" type="submit" style="margin-top:8px">Unggah</button></noscript>
+        </form>
+        {{if $path}}
+          <form method="post" action="/sekolah/gambar/{{.Jenis}}/hapus" data-confirm="Hapus {{lower .Label}}?">
+            {{$C.CSRFField}}
+            <button class="btn btn-danger btn-sm" type="submit">{{icon "trash" 14}}Hapus {{lower .Label}}</button>
+          </form>
+        {{end}}
+      </div>
+    {{end}}
+  </div>
+</section>

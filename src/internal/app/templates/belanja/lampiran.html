@@ -1,0 +1,40 @@
+{{$C := .C}}{{$row := .row}}<section class="card" id="lampiran" style="margin-top:18px">
+  <div class="card-head"><h2>Lampiran transaksi</h2></div>
+  <div class="card-body stack" style="--gap:14px">
+    <p class="muted small" style="margin:0">Unggah nota, BAST, atau dokumen pendukung dalam format PDF, JPG, atau PNG (maksimal 2 MB per berkas).</p>
+    {{if .lampiran}}
+      <div class="stack" style="--gap:8px">
+        {{range .lampiran}}{{$f := .}}
+          <div class="row-between">
+            <div>
+              <span class="badge badge-off">{{if eq ($f.S "jenis") "nota"}}Nota{{else if eq ($f.S "jenis") "bast"}}BAST{{else}}Lampiran{{end}}</span>
+              <a href="/file/{{$f.S "path"}}" target="_blank" rel="noopener">{{$f.S "nama_asli"}}</a>
+            </div>
+            <form method="post" action="/belanja/{{$row.I "id"}}/lampiran/{{$f.I "id"}}/hapus" data-confirm="Hapus lampiran ini?">
+              {{$C.CSRFField}}
+              <button class="btn btn-ghost btn-icon" type="submit" aria-label="Hapus lampiran {{$f.S "nama_asli"}}">{{icon "trash" 16}}</button>
+            </form>
+          </div>
+        {{end}}
+      </div>
+    {{end}}
+    <form class="form-grid" method="post" action="/belanja/{{$row.I "id"}}/lampiran" enctype="multipart/form-data">
+      {{$C.CSRFField}}
+      <div class="field">
+        <label for="lampiran-jenis">Jenis dokumen</label>
+        <select class="input" id="lampiran-jenis" name="jenis">
+          <option value="nota">Nota</option>
+          <option value="bast">BAST</option>
+          <option value="lainnya">Dokumen lain</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="lampiran-berkas">Berkas</label>
+        <input class="input" id="lampiran-berkas" type="file" name="berkas" accept="application/pdf,image/jpeg,image/png" required>
+      </div>
+      <div class="form-foot" style="grid-column:1/-1;padding:0">
+        <button class="btn btn-ghost" type="submit">{{icon "upload" 16}}Unggah lampiran</button>
+      </div>
+    </form>
+  </div>
+</section>

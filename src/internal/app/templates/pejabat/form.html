@@ -1,0 +1,46 @@
+{{$C := .C}}{{$p := .p}}<div class="page-head">
+  <div>
+    <div class="crumb"><a href="/pejabat">Pejabat</a><span aria-hidden="true">/</span><span>{{if .edit}}Ubah{{else}}Tambah{{end}}</span></div>
+    <h1>{{if .edit}}Ubah pejabat{{else}}Tambah pejabat{{end}}</h1>
+    <p class="lead">Tulis nama lengkap beserta gelar persis seperti di dokumen resmi.</p>
+  </div>
+</div>
+
+<form class="card" method="post" action="/pejabat{{if .edit}}/{{$p.I "id"}}{{end}}" enctype="multipart/form-data" novalidate style="max-width:860px">
+  {{$C.CSRFField}}
+  <div class="card-body form-grid">
+    {{$C.Field "name" "peran" "label" "Peran" "value" ($C.OldVal "peran" ($p.S "peran")) "type" "select" "options" .peran "required" true}}
+    {{$C.Field "name" "pangkat" "label" "Pangkat / golongan" "value" ($C.OldVal "pangkat" ($p.S "pangkat")) "hint" "Contoh: Pembina, IV/a. Kosongkan bila bukan PNS."}}
+    {{$C.Field "name" "nama" "label" "Nama lengkap" "value" ($C.OldVal "nama" ($p.S "nama")) "required" true "span2" true}}
+    {{$C.Field "name" "nip" "label" "NIP" "value" ($C.OldVal "nip" ($p.S "nip")) "mono" true "span2" true "hint" "18 angka. Kosongkan bila tidak punya NIP." "extra" `inputmode="numeric" maxlength="21"`}}
+    {{$C.Field "name" "mulai" "label" "Mulai menjabat" "value" ($C.OldVal "mulai" ($p.S "mulai")) "type" "date" "required" true}}
+    {{$C.Field "name" "selesai" "label" "Selesai menjabat" "value" ($C.OldVal "selesai" ($p.S "selesai")) "type" "date" "hint" "Kosongkan bila masih menjabat."}}
+
+    <div class="fieldset-title">Tanda tangan</div>
+    <div class="field">
+      <div class="ttd" id="prev-ttd" style="height:130px">
+        {{if truthy ($p.S "ttd_path")}}
+          <img src="{{uploadURL ($p.S "ttd_path")}}" alt="Tanda tangan saat ini">
+        {{else}}
+          <span class="placeholder">{{icon "pen" 18}}<br>Belum ada tanda tangan</span>
+        {{end}}
+      </div>
+      {{if truthy ($p.S "ttd_path")}}
+        <label class="check" style="margin-top:6px"><input type="checkbox" name="hapus_ttd" value="1"><span>Hapus tanda tangan ini</span></label>
+      {{end}}
+    </div>
+    <div class="field">
+      <label class="drop">
+        {{icon "upload"}}
+        <span>{{if truthy ($p.S "ttd_path")}}Ganti tanda tangan{{else}}Pilih gambar tanda tangan{{end}}<br><span class="name" data-empty="PNG atau JPG">PNG atau JPG</span></span>
+        <input type="file" name="ttd" accept="image/png,image/jpeg" data-preview="#prev-ttd" aria-label="Unggah tanda tangan"{{if $C.FieldError "ttd"}} aria-invalid="true"{{end}}>
+      </label>
+      {{with $C.FieldError "ttd"}}<span class="error">{{.}}</span>{{else}}
+      <span class="hint">Tanda tangan di kertas putih, difoto atau dipindai. PNG berlatar transparan paling rapi di kuitansi.</span>{{end}}
+    </div>
+  </div>
+  <div class="form-foot">
+    <a class="btn btn-ghost left" href="/pejabat">Batal</a>
+    <button class="btn" type="submit">{{icon "check" 16}}{{if .edit}}Simpan perubahan{{else}}Simpan pejabat{{end}}</button>
+  </div>
+</form>

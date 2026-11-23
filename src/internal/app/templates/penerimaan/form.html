@@ -1,0 +1,46 @@
+{{$C := .C}}{{$row := .row}}<div class="page-head">
+  <div>
+    <div class="crumb"><a href="/penerimaan">Penerimaan dana</a><span aria-hidden="true">/</span><span>{{if .edit}}Ubah{{else}}Baru{{end}}</span></div>
+    <h1>{{.head}}</h1>
+    <p class="lead">Isi sesuai tanggal dan nominal di rekening koran.</p>
+  </div>
+</div>
+
+<form class="card" method="post" action="/penerimaan{{if .edit}}/{{$row.I "id"}}{{end}}" novalidate style="max-width:860px">
+  {{$C.CSRFField}}
+  <div class="card-body form-grid">
+    {{$C.Field "name" "tgl" "label" "Tanggal diterima" "type" "date" "value" .tglVal "required" true}}
+    {{$C.Field "name" "no_bukti" "label" "Nomor bukti BKU" "value" .noBuktiVal "mono" true "extra" "readonly" "hint" "Dibuat otomatis (BKM = Bukti Kas Masuk) mengikuti urutan tanggal penerimaan saat disimpan."}}
+
+    <div class="field span-2">
+      <label for="f-rencana_pendapatan_id">Pasangkan dengan rencana pendapatan <span class="muted small">(opsional)</span></label>
+      {{with $C.FieldError "rencana_pendapatan_id"}}
+        <select class="input" id="f-rencana_pendapatan_id" name="rencana_pendapatan_id" data-rencana-pendapatan aria-invalid="true" aria-describedby="f-rencana_pendapatan_id-err">
+      {{else}}
+        <select class="input" id="f-rencana_pendapatan_id" name="rencana_pendapatan_id" data-rencana-pendapatan>
+      {{end}}
+        <option value="">— Belum dipasangkan —</option>
+        {{range .plans}}
+          <option value="{{.I "id"}}" data-tahap="{{.S "tahap"}}" data-uraian="{{.S "uraian"}}" data-target="{{.F "target_jumlah"}}" data-realisasi="{{.F "realisasi"}}"{{if eq (str (.I "id")) $.planVal}} selected{{end}}>{{.S "tahap_label"}} · {{.S "uraian"}} · target {{rupiah (.F "target_jumlah")}}</option>
+        {{end}}
+      </select>
+      {{with $C.FieldError "rencana_pendapatan_id"}}
+        <span class="error" id="f-rencana_pendapatan_id-err">{{.}}</span>
+      {{else}}
+        {{if .noPlans}}
+          <span class="hint">Belum ada target pendapatan. <a href="/rencana/pendapatan/baru">Tambah rencana pendapatan</a> atau lanjutkan tanpa pasangan.</span>
+        {{else}}
+          <span class="hint">Satu target dapat dipasangkan dengan beberapa penerimaan aktual.</span>
+        {{end}}
+      {{end}}
+    </div>
+
+    {{$C.Field "name" "uraian" "label" "Uraian" "value" .uraian "required" true "span2" true}}
+    {{$C.Field "name" "tahap" "label" "Tahap" "type" "select" "options" .tahapOpts "value" .tahapVal "required" true}}
+    {{$C.Field "name" "jumlah" "label" "Jumlah" "type" "money" "value" .jumlahVal "required" true}}
+  </div>
+  <div class="form-foot">
+    <a class="btn btn-ghost left" href="/penerimaan">Batal</a>
+    <button class="btn" type="submit">{{icon "check" 16}}{{if .edit}}Simpan perubahan{{else}}Simpan penerimaan{{end}}</button>
+  </div>
+</form>
