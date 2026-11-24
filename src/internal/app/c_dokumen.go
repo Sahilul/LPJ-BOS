@@ -46,6 +46,9 @@ func dokumenData(c *Ctx) Row {
 		"tanggal": TanggalIndo(b.S("tgl")), "tglLunas": lunas, "tahap": tahap,
 		"lokasiTanggal": strings.Trim(strings.TrimSpace(s.S("kabupaten"))+", "+TanggalIndo(b.S("tgl")), ", "),
 		"jenisLabel":    jenisLabel,
+		// Kuitansi di atas Rp5 juta wajib bermeterai Rp10.000 (UU 10/2020).
+		"perluMeterai": PerluBeaMeterai(b.F("total")),
+		"nilaiMeterai": TarifBeaMeterai,
 	}
 }
 
@@ -129,7 +132,9 @@ func kuitansiPdf(d Row, receivers []Row) []byte {
 		if i > 0 {
 			pdf.AddPage()
 		}
-		k.Kop()
+		// Kuitansi sengaja tanpa kop surat: dokumen ini diserahkan per penerima
+		// dan identitas sekolah sudah tercetak pada baris "Sudah terima dari".
+		pdf.SetY(pdf.GetY() + 4)
 		startY := pdf.GetY()
 		pdf.SetXY(20, startY+2)
 		pdf.SetFont("Times", "U", 15)
@@ -202,6 +207,14 @@ func kuitansiPdf(d Row, receivers []Row) []byte {
 			pdf.SetX(20 + 48)
 			pdf.SetFont("Times", "", 11)
 			pdf.MultiCell(k.W-40-48, 5.4, k.T("Bruto "+Rupiah(p["bruto"])+", PPh 21 "+Rupiah(p["pph21"])), "", "L", false)
+		}
+		// Kuitansi di atas Rp5.000.000 wajib bermeterai (UU 10/2020 Pasal 3 ayat (2) huruf g).
+		if PerluBeaMeterai(p.F("netto")) {
+			pdf.SetX(20 + 48)
+			pdf.SetFont("Times", "I", 10)
+			pdf.MultiCell(k.W-40-48, 5, k.T(fmt.Sprintf("Kuitansi ini melebihi Rp5.000.000 sehingga wajib dibubuhi bea meterai Rp%s.",
+				Angka(TarifBeaMeterai))), "", "L", false)
+			pdf.SetFont("Times", "", 11)
 		}
 		lbl("Sumber Dana", sumber, true)
 
