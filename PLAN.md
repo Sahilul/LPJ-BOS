@@ -1,12 +1,12 @@
 # Rencana Aplikasi LPJ BOS
 
-Aplikasi web berbasis PHP native + SQLite yang dijalankan di container Docker untuk membantu bendahara menyusun laporan BOSP Reguler, mulai dari input belanja, BKU, penerima, nota/kuitansi, hingga SPJ lengkap.
+Aplikasi web berbasis Go + SQLite yang dijalankan di container Docker untuk membantu bendahara menyusun laporan BOSP Reguler, mulai dari input belanja, BKU, penerima, nota/kuitansi, hingga SPJ lengkap.
 
 ## 0. Ruang Lingkup
 
 | Aspek | Keputusan |
 |---|---|
-| Platform | Web app PHP native, dijalankan lokal via Docker (akses `http://localhost:8080`) |
+| Platform | Web app Go (satu binary), dijalankan lokal via Docker (akses `http://localhost:8080`) |
 | Jenjang | Campuran (SD/MI, SMP/MTs, SMA/SMK/MA) — dapat diatur per profil sekolah |
 | Jenis dana | BOSP Reguler |
 | Pengguna | Satu sekolah, satu pengguna |
@@ -16,55 +16,30 @@ Aplikasi web berbasis PHP native + SQLite yang dijalankan di container Docker un
 
 | Bagian | Pilihan | Alasan |
 |---|---|---|
-| Bahasa | **PHP 8.3 native** (tanpa framework) | Ringan, mudah di-deploy, mudah dipahami |
-| Web server | Apache (`php:8.3-apache`) + `mod_rewrite` | Satu container, front controller `index.php` |
-| Database | **SQLite** via PDO (`pdo_sqlite`) | Satu file, tanpa server DB, mudah di-backup |
-| UI | HTML + Bootstrap 5 (aset lokal, tanpa CDN) | Form & tabel rapi, bisa dipakai offline |
-| Interaksi | JavaScript vanilla (+ Alpine.js opsional) | Item belanja dinamis, hitung pajak di form |
-| PDF | Dompdf (`dompdf/dompdf`) | Kuitansi, BKU, SPJ dari template HTML |
-| Excel | PhpSpreadsheet (`phpoffice/phpspreadsheet`) | Export/import `.xlsx` dengan format |
-| Dependensi | Composer (hanya untuk Dompdf & PhpSpreadsheet) | Library lain tidak diperlukan |
-| Terbilang | Helper PHP sendiri | Nominal dalam huruf untuk kuitansi |
-| Container | Docker + Docker Compose | Sekali `docker compose up`, langsung jalan |
+| Bahasa | **Go 1.26** (stdlib `net/http`) | Satu binary tanpa CGO, cepat, mudah di-deploy |
+| Template | `html/template` (tertanam via `embed`) | Escape otomatis, tanpa file terpisah saat deploy |
+| Database | **SQLite** via `modernc.org/sqlite` (pure Go) | Satu file, tanpa server DB, mudah di-backup |
+| UI | HTML + CSS/JS sendiri (aset lokal tertanam, tanpa CDN) | Ringan, bisa dipakai offline |
+| Interaksi | JavaScript vanilla (`assets/js/app.js`) | Item belanja dinamis, hitung pajak di form |
+| PDF | `go-pdf/fpdf` + font Liberation | Kuitansi, bukti terima, BKU, SPJ |
+| Excel | `xuri/excelize` | Export/import `.xlsx` dengan format |
+| Terbilang | Helper Go sendiri | Nominal dalam huruf untuk kuitansi |
+| Container | Docker multi-stage (`golang` → `alpine`) + Compose | Sekali `docker compose up`, langsung jalan |
 
-### 1.1 Arsitektur PHP Native (sederhana)
+### 1.1 Arsitektur
 
-- **Front controller**: semua request ke `public/index.php` → router sederhana (`?page=` atau path).
-- **Pola**: `controllers/` (logika halaman), `models/` atau repository (query PDO), `views/` (template PHP).
-- **Keamanan dasar**: prepared statement PDO, escape output (`htmlspecialchars`), token CSRF di setiap form, login sederhana (password hash).
-- **Migrasi**: file SQL bernomor di `database/migrations/` dijalankan otomatis saat start (tabel `migrations`).
-- **Transaksi DB**: simpan belanja + item + pajak dalam satu transaksi PDO.
-- SQLite: aktifkan `PRAGMA foreign_keys = ON` dan `journal_mode = WAL`.
+- **Entry point**: `src/cmd/lpjbos/main.go` → `app.Run()`; router `http.ServeMux` di `server.go`.
+- **Pola**: `c_*.go` (handler halaman), `svc_*.go` (logika & validasi), `templates/` (tampilan), `mcp*.go` (server MCP).
+- **Keamanan dasar**: prepared statement, escape output otomatis, token CSRF di setiap form POST, login dengan password hash (bcrypt).
+- **Migrasi**: file SQL bernomor di `migrations/` (tertanam) dijalankan otomatis saat start (tabel `migrations`).
+- **Transaksi DB**: simpan belanja + item + pajak dalam satu transaksi; request tulis (POST/MCP) diserialkan dengan kunci level aplikasi agar transaksi tidak saling bercampur.
+- SQLite: `PRAGMA foreign_keys = ON` dan `journal_mode = WAL`.
 
 ### 1.2 Container
 
-```yaml
-# docker-compose.yml (rencana)
-services:
-  app:
-    build: .
-    ports:
-      - "8080:80"
-    volumes:
-      - ./data:/var/www/data        # file SQLite + lampiran (persisten)
-      - ./src:/var/www/html          # mode development
-    environment:
-      - APP_ENV=local
-      - DB_PATH=/var/www/data/lpjbos.sqlite
-    restart: unless-stopped
-```
-
-```dockerfile
-# Dockerfile (rencana)
-FROM php:8.3-apache
-RUN apt-get update && apt-get install -y libzip-dev libpng-dev libsqlite3-dev unzip \
- && docker-php-ext-install pdo_sqlite zip gd \
- && a2enmod rewrite
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-WORKDIR /var/www/html
-COPY src/ .
-RUN composer install --no-dev --optimize-autoloader
-```
+- `Dockerfile`: build di `golang:1.26-alpine`, hasil binary disalin ke `alpine` (port 80, `DATA_DIR=/var/www/data`).
+- `docker-compose.yml`: produksi (Dokploy), data di volume `lpjbos-data`.
+- `docker-compose.override.yml`: dev lokal, port `8080` dan mount `./data`.
 
 > ⚠️ File database dan lampiran disimpan di volume `./data`, sehingga data tetap aman meski container dihapus. **Backup = salin file `lpjbos.sqlite`** (tersedia juga tombol download/restore di aplikasi).
 
@@ -194,7 +169,7 @@ Jenis transaksi bisa ditentukan otomatis dari kode rekening rencana belanja (mis
 - **Sisa rupiah = Pagu − Σ transaksi BKU**, dan sisa periode = frekuensi rencana − Σ periode pada BKU. Keduanya dihitung dari transaksi, bukan disimpan manual.
 - Jadwal rencana menjadi panduan; periode yang akan dibeli/dibayar dipilih saat input BKU.
 - Mengedit atau menghapus transaksi otomatis mengembalikan atau menyesuaikan sisa.
-- Validasi pagu dilakukan di server (PHP) dan juga ditampilkan langsung di form (JavaScript).
+- Validasi pagu dilakukan di server (Go) dan juga ditampilkan langsung di form (JavaScript).
 - Untuk menambah pagu, ubah rencana belanja (revisi anggaran), bukan dengan memaksa transaksi.
 
 ### 2.6 Mutasi Kas
@@ -293,56 +268,35 @@ TutupBuku(bulan, tahun, saldoTunai, saldoBank, terkunci)
 
 **Prinsip:** BKU dan buku pembantu **tidak disimpan**, melainkan dihitung (derived) dari Penerimaan, Belanja, Pajak, dan MutasiKas agar angka selalu konsisten.
 
-## 4. Struktur Folder (rencana)
+## 4. Struktur Folder
 
 ```text
 LPJ BOS/
   Dockerfile
   docker-compose.yml
-  data/                     # volume: lpjbos.sqlite + lampiran/ + uploads/ (kop, TTD, stempel; tidak di-commit)
+  docker-compose.override.yml
+  data/                     # lpjbos.sqlite + lampiran/ + uploads/ (kop, TTD, stempel; tidak di-commit)
   src/
-    composer.json
-    public/                 # document root Apache
-      index.php             # front controller
-      .htaccess             # rewrite ke index.php
-      assets/               # bootstrap, css, js (lokal)
-    app/
-      bootstrap.php         # autoload, config, koneksi PDO, session
-      Router.php
-      Database.php          # PDO SQLite + runner migrasi
-      helpers.php           # rupiah(), terbilang(), tanggal_indo(), csrf(), e()
-      Services/
-        AnggaranService.php # hitung sisa pagu & validasi saat simpan transaksi
-        PajakService.php    # kalkulasi pajak
-        KasService.php      # BKU & buku pembantu (query derived)
-        NomorBukti.php      # penomoran otomatis
-      Controllers/
-        PengaturanController.php
-        MasterController.php
-        RkasController.php
-        PenerimaanController.php
-        BelanjaController.php
-        MutasiController.php
-        PenerimaController.php
-        KuitansiController.php
-        LaporanController.php
-        BackupController.php
-    views/
-      layout.php
-      pengaturan/ master/ rkas/ penerimaan/ belanja/ mutasi/
-      penerima/ kuitansi/ laporan/ backup/
-      pdf/                  # template HTML untuk Dompdf
-        kuitansi.php
-        bukti_terima.php    # daftar penerima honor/transport + tanda tangan
-    database/
-      migrations/           # 001_init.sql, 002_seed_komponen.sql, ...
+    go.mod
+    cmd/lpjbos/main.go      # entry point
+    internal/app/
+      server.go             # router, middleware, sesi, CSRF
+      db.go                 # wrapper SQLite + transaksi + runner migrasi
+      helpers.go            # rupiah, terbilang, tanggal Indonesia, saldo kas, nomor bukti
+      c_*.go                # handler: auth, sekolah, master, rencana, penerimaan, belanja/BKU, mutasi, dokumen, laporan, backup
+      svc_*.go              # service: belanja, penerimaan, mutasi, rencana, lampiran, laporan, PDF
+      laporan_excel.go, master_excel.go
+      mcp.go, mcp_*.go      # server MCP (akses AI)
+      migrations/           # 001_init.sql, 002_seed.sql, ...
+      templates/            # layouts/, auth/, bku/, belanja/, laporan/, ...
+      assets/               # css/, js/, fonts/
 ```
 
 ## 5. Tahapan Pengerjaan
 
 | Fase | Isi | Hasil |
 |---|---|---|
-| **1. Fondasi** | Dockerfile + compose, struktur PHP, router, koneksi SQLite + migrasi, login, layout, profil sekolah, upload kop surat/TTD/stempel, data master (toko, database penerima + import/export Excel, komponen, rekening, pajak), backup/restore | Container jalan, kerangka aplikasi siap |
+| **1. Fondasi** | Dockerfile + compose, struktur Go, router, koneksi SQLite + migrasi, login, layout, profil sekolah, upload kop surat/TTD/stempel, data master (toko, database penerima + import/export Excel, komponen, rekening, pajak), backup/restore | Container jalan, kerangka aplikasi siap |
 | **2. Transaksi inti** | Rencana belanja (input manual), penerimaan, transaksi BKU dengan pilih rencana belanja (jenis barang/jasa, honor, transport + daftar penerima), validasi & pengurangan sisa pagu, mutasi kas, pajak otomatis | Data bisa diinput, sisa anggaran otomatis berkurang |
 | **3. Buku kas** | BKU, BP Tunai/Bank/Pajak, saldo berjalan, tutup buku | Buku kas jadi |
 | **4. Dokumen bukti** | Kuitansi + terbilang, Daftar Bukti Terima honor/transport, nota, BAST, lampiran, tombol Cetak Kuitansi & Download Bukti Terima di BKU, cetak massal | Bukti siap cetak dari BKU |
@@ -370,15 +324,16 @@ LPJ BOS/
 
 - Endpoint `POST /mcp` (JSON-RPC 2.0, Streamable HTTP mode JSON), header `Authorization: Bearer lpbos_…`. Tidak memakai sesi/CSRF.
 - Token dikelola di **Sistem → Akses AI (MCP)** (`/api`): akses *baca* atau *tulis*, disimpan sebagai hash SHA-256, ditampilkan sekali. Semua panggilan dicatat di `api_log`.
-- Kode: `app/Mcp/` — `Http` (transport), `Server` (protokol), `Registry`, `ToolsBaca`, `ToolsTulis`, `ApiAuth`.
+- Kode: `mcp.go` (transport, protokol, autentikasi token), `mcp_baca.go`, `mcp_tulis.go`, `mcp_laporan.go`, `mcp_pengaturan.go`.
 - Tool baca: status, tahun_list, sekolah, komponen/rekening/pajak/toko/penerima_list, rencana_list/detail, penerimaan_list, rencana_pendapatan_list, bku, saldo, laporan_list, laporan.
-- Tool tulis: penerimaan/mutasi/belanja/rencana `_simpan` (tanpa id = baru, dengan id = ubah) dan `_hapus`. Validasi lewat service yang sama dengan form web (`*Service::validate`); tahun diambil dari `tgl`, harus tahun yang terdaftar.
+- Tool tulis: penerimaan/mutasi/belanja/rencana `_simpan` (tanpa id = baru, dengan id = ubah) dan `_hapus`. Validasi lewat service yang sama dengan form web (`svc_*.go`); tahun diambil dari `tgl`, harus tahun yang terdaftar.
 
 ### Menjalankan aplikasi
 
 ```bash
 docker compose up -d --build   # pertama kali
 docker compose up -d           # selanjutnya
+cd src && go run ./cmd/lpjbos  # tanpa Docker
 ```
 
 ## 6. Yang Perlu Disiapkan

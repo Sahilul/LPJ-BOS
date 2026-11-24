@@ -173,6 +173,8 @@ func mcpHTTP(w http.ResponseWriter, r *http.Request) {
 		}}})
 		return
 	}
+	raw, _ := io.ReadAll(io.LimitReader(r.Body, 8<<20))
+	defer lockApp(true)()
 	token := VerifyToken(TokenDariHeader(r))
 	if token == nil {
 		w.Header().Set("WWW-Authenticate", `Bearer realm="lpjbos"`)
@@ -181,7 +183,6 @@ func mcpHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	SentuhToken(token)
 
-	raw, _ := io.ReadAll(io.LimitReader(r.Body, 8<<20))
 	raw = bytes.TrimSpace(raw)
 	var body any
 	dec := json.NewDecoder(bytes.NewReader(raw))

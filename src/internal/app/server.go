@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"runtime/debug"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -180,7 +181,17 @@ func serveApp(w http.ResponseWriter, r *http.Request) {
 	}
 	c := &Ctx{W: w, R: r, Path: path, Query: r.URL.Query(), Form: Form{}}
 	c.Sess = loadSession(r)
+	// Kunci diambil setelah body terbaca agar upload lambat tidak menahan request lain.
+	var unlock func()
 	defer func() {
+		if unlock != nil {
+			unlock()
+		}
+	}()
+	defer func() {
+		if unlock == nil {
+			unlock = lockApp(false)
+		}
 		if rec := recover(); rec != nil {
 			switch s := rec.(type) {
 			case redirectSignal:
@@ -234,6 +245,7 @@ func serveApp(w http.ResponseWriter, r *http.Request) {
 			c.Abort(419, "Sesi formulir sudah kedaluwarsa. Muat ulang halaman lalu coba lagi.")
 		}
 	}
+	unlock = lockApp(r.Method != "GET" && r.Method != "HEAD")
 
 	hasUser := Q.Int("SELECT COUNT(*) FROM users") > 0
 	if !hasUser && path != "/setup" {
@@ -243,6 +255,20 @@ func serveApp(w http.ResponseWriter, r *http.Request) {
 		c.Redirect("/login")
 	}
 	Routes.dispatch(c)
+}
+
+// appMu menyerialkan akses database antar-request: Q.Tx mengganti koneksi
+// global (Q.q) selama transaksi, dan pulihkan cadangan mengganti Q sendiri.
+// Request baca (GET/HEAD) boleh berjalan bersamaan; request tulis eksklusif.
+var appMu sync.RWMutex
+
+func lockApp(write bool) func() {
+	if write {
+		appMu.Lock()
+		return appMu.Unlock
+	}
+	appMu.RLock()
+	return appMu.RUnlock
 }
 
 // Run menjalankan server HTTP sampai berhenti.

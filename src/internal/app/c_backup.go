@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -189,7 +190,11 @@ func backupRestore(c *Ctx) {
 	}
 
 	_ = Q.Close()
-	defer func() { _ = ReopenDB() }()
+	defer func() {
+		if err := ReopenDB(); err != nil {
+			log.Printf("buka ulang database setelah pulihkan: %v", err)
+		}
+	}()
 	backupCurrentDB()
 	_ = os.Remove(Cfg.DBPath + "-wal")
 	_ = os.Remove(Cfg.DBPath + "-shm")

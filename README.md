@@ -2,7 +2,7 @@
 
 Aplikasi web untuk menyusun LPJ/SPJ dana BOSP sekolah: rencana belanja (RKAS), penerimaan dana, transaksi belanja, mutasi kas, Buku Kas Umum, kuitansi/bukti terima, dan laporan PDF/Excel.
 
-Dibangun dengan Go (stdlib `net/http` + `html/template`) dan SQLite, menjadi satu binary tanpa CGO (template, aset, dan migrasi tertanam). Versi PHP lama disimpan di `legacy-php/` sebagai rujukan.
+Dibangun dengan Go (stdlib `net/http` + `html/template`) dan SQLite, menjadi satu binary tanpa CGO (template, aset, dan migrasi tertanam).
 
 ## Menjalankan
 
