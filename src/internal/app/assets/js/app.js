@@ -477,6 +477,17 @@
     const batasPPh22 = +form.dataset.batasPph22;
     // persen: tampilkan tarif tanpa nol berlebih, mis. 1,5% atau 2%.
     const persen = (n) => `${String(Number(n.toFixed(2))).replace('.', ',')}%`;
+    const swasta = form.dataset.swasta === '1';
+    let honorBulan = {};
+    try { honorBulan = JSON.parse(form.dataset.honorBulan || '{}') || {}; } catch { honorBulan = {}; }
+    const tglEl = $('[name=tgl]');
+    // TER bulanan PP 58/2023 Lampiran A-C: [batas atas sebulan, tarif persen].
+    const terBulanan = {
+      A: [[5.4e6, 0], [5.65e6, 0.25], [5.95e6, 0.5], [6.3e6, 0.75], [6.75e6, 1], [7.5e6, 1.25], [8.55e6, 1.5], [9.65e6, 1.75], [10.05e6, 2], [10.35e6, 2.25], [10.7e6, 2.5], [11.05e6, 3], [11.6e6, 3.5], [12.5e6, 4], [13.75e6, 5], [15.1e6, 6], [16.95e6, 7], [19.75e6, 8], [24.15e6, 9], [26.45e6, 10], [28e6, 11], [30.05e6, 12], [32.4e6, 13], [35.4e6, 14], [39.1e6, 15], [43.85e6, 16], [47.8e6, 17], [51.4e6, 18], [56.3e6, 19], [62.2e6, 20], [68.6e6, 21], [77.5e6, 22], [89e6, 23], [103e6, 24], [125e6, 25], [157e6, 26], [206e6, 27], [337e6, 28], [454e6, 29], [550e6, 30], [695e6, 31], [910e6, 32], [1400e6, 33], [Infinity, 34]],
+      B: [[6.2e6, 0], [6.5e6, 0.25], [6.85e6, 0.5], [7.3e6, 0.75], [9.2e6, 1], [10.75e6, 1.5], [11.25e6, 2], [11.6e6, 2.5], [12.6e6, 3], [13.6e6, 4], [14.95e6, 5], [16.4e6, 6], [18.45e6, 7], [21.85e6, 8], [26e6, 9], [27.7e6, 10], [29.35e6, 11], [31.45e6, 12], [33.95e6, 13], [37.1e6, 14], [41.1e6, 15], [45.8e6, 16], [49.5e6, 17], [53.8e6, 18], [58.5e6, 19], [64e6, 20], [71e6, 21], [80e6, 22], [93e6, 23], [109e6, 24], [129e6, 25], [163e6, 26], [211e6, 27], [374e6, 28], [459e6, 29], [555e6, 30], [704e6, 31], [957e6, 32], [1405e6, 33], [Infinity, 34]],
+      C: [[6.6e6, 0], [6.95e6, 0.25], [7.35e6, 0.5], [7.8e6, 0.75], [8.85e6, 1], [9.8e6, 1.25], [10.95e6, 1.5], [11.2e6, 1.75], [12.05e6, 2], [12.95e6, 3], [14.15e6, 4], [15.55e6, 5], [17.05e6, 6], [19.5e6, 7], [22.7e6, 8], [26.6e6, 9], [28.1e6, 10], [30.1e6, 11], [32.6e6, 12], [35.4e6, 13], [38.9e6, 14], [43e6, 15], [47.4e6, 16], [51.2e6, 17], [55.8e6, 18], [60.4e6, 19], [66.7e6, 20], [74.5e6, 21], [83.2e6, 22], [95.6e6, 23], [110e6, 24], [134e6, 25], [169e6, 26], [221e6, 27], [390e6, 28], [463e6, 29], [561e6, 30], [709e6, 31], [965e6, 32], [1419e6, 33], [Infinity, 34]],
+    };
+    const tarifTER = (kat, sebulan) => (terBulanan[kat] || terBulanan.A).find(([b]) => sebulan <= b)[1];
     const danaBOS = () => $('[data-dana-bos]')?.checked ?? true;
     const viaSiplah = () => $('[data-siplah]')?.checked ?? false;
     // Nilai nota sudah termasuk PPN, jadi DPP = 11/111 bagian dari pembayaran
@@ -494,7 +505,7 @@
       return Math.round(p);
     };
     // PPh 21 per rezim PMK 168/2023. Jenis penerima ditandai pada opsi penerima.
-    const pph21 = (bruto, opt, hari) => {
+    const pph21 = (bruto, opt, hari, lain = [0, 0]) => {
       if (!bruto) return 0;
       const jenis = opt?.dataset?.jenisPen || 'tidak_tetap';
       const gol = opt?.dataset?.gol || '';
@@ -507,8 +518,15 @@
       if (jenis === 'bukan_pegawai') return pasal17(bruto * 0.5);
       if (jenis === 'peserta') return pasal17(bruto);
       if (jenis === 'tetap') return pasal17(bruto);
-      // Pegawai tidak tetap: tarif efektif harian bila upah sehari <= Rp2.500.000.
-      const sehari = bruto / Math.max(1, hari || 1);
+      // Pegawai tidak tetap bulanan (hari kosong): TER bulanan atas jumlah sebulan,
+      // dikurangi PPh 21 yang sudah dipotong pada pembayaran lain bulan itu.
+      if (!(hari > 0)) {
+        const sebulan = bruto + lain[0];
+        const terutang = Math.round(sebulan * tarifTER(opt?.dataset?.ptkp || 'A', sebulan) / 100);
+        return Math.max(0, terutang - lain[1]);
+      }
+      // Pegawai tidak tetap harian: tarif efektif harian bila upah sehari <= Rp2.500.000.
+      const sehari = bruto / hari;
       if (sehari > 2500000) return pasal17(bruto * 0.5);
       return sehari <= 450000 ? 0 : Math.round(bruto * 0.005);
     };
@@ -613,7 +631,7 @@
           tr.querySelector('[data-sub]').textContent = rp(sub);
           total += sub;
         });
-        const ppnOn = $('[data-pajak=ppn]').checked;
+        const ppnOn = !swasta && !!$('[data-pajak=ppn]')?.checked;
         const sel = toko?.options?.[toko.selectedIndex];
         const pkp = sel?.dataset?.pkp === '1';
         const punyaNPWP = sel?.dataset?.npwp === '1';
@@ -628,7 +646,7 @@
           pph23: tarifPph(tarif.pph23, punyaNPWP),
         };
         // PPh 22 tidak dipungut untuk dana BOS maupun transaksi lewat SIPLah.
-        const pph22Berlaku = !siplah && !bos && dpp > batasPPh22;
+        const pph22Berlaku = !swasta && !siplah && !bos && dpp > batasPPh22;
         $$('[data-pajak]').forEach((cb) => {
           const jenis = cb.dataset.pajak;
           let v = 0;
@@ -647,7 +665,9 @@
         const pph23Label = $('[data-pph23-tarif]');
         if (pph23Label) pph23Label.textContent = persen(tarifKini.pph23);
         const saran = $('[data-pajak-saran]');
-        if (saran) {
+        if (saran && swasta) {
+          saran.textContent = 'Sekolah swasta: bendahara bukan pemungut PPN dan PPh 22. PPh 23 tetap dipotong untuk jasa/sewa, tanpa batas minimal.';
+        } else if (saran) {
           const bisaPPN = pkp && !siplah && dpp > batas;
           const bagian = [];
           bagian.push(siplah
@@ -671,7 +691,9 @@
           const hariEl = tr.querySelector('[data-hari]');
           const hari = hariEl ? desimal(hariEl.value) : 0;
           const bruto = Math.round(desimal(tr.querySelector('[data-vol]').value) * uang(tr.querySelector('[data-harga]').value));
-          const pph = j === 'honor' && opt?.value ? pph21(bruto, opt, hari) : 0;
+          const bulan = (tglEl?.value || '').slice(0, 7);
+          const lain = honorBulan[opt?.value]?.[bulan] || [0, 0];
+          const pph = j === 'honor' && opt?.value ? pph21(bruto, opt, hari, lain) : 0;
           tr.querySelector('[data-sub]').textContent = rp(bruto);
           tr.querySelector('td[data-pph]').textContent = rp(pph);
           tr.querySelector('[data-netto]').textContent = rp(bruto - pph);

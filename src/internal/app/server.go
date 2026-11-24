@@ -116,6 +116,7 @@ func Init() error {
 	if err := Q.Migrate(); err != nil {
 		return fmt.Errorf("migrasi: %w", err)
 	}
+	HitungUlangPPh21Sekali()
 	loadTemplates()
 	// urutkan registrasi menurut order (stabil)
 	for i := 1; i < len(registrations); i++ {
@@ -137,7 +138,11 @@ func ReopenDB() error {
 		return err
 	}
 	Q = d
-	return Q.Migrate()
+	if err := Q.Migrate(); err != nil {
+		return err
+	}
+	HitungUlangPPh21Sekali()
+	return nil
 }
 
 func Handler() http.Handler {

@@ -250,3 +250,73 @@ func TestBelanjaHonorGTTUpahSetengahJuta(t *testing.T) {
 		t.Errorf("PPh 21 GTT Rp500.000/hari = %v, want 25000", got)
 	}
 }
+
+func TestBelanjaHonorGTTBulananDiBawahTER(t *testing.T) {
+	setupBelanja(t, true, "")
+	pid := setupHonor(t, "GTT", "", "tidak_tetap")
+	// Honor bulanan Rp544.000 (hari kosong): TER A 0% s.d. Rp5.400.000 sebulan.
+	_, anak, err := BelanjaValidate(formHonor(pid, 544000, ""), 0, 2026)
+	if err != nil {
+		t.Fatalf("validasi: %v", errValidasi(t, err).Errors)
+	}
+	if got := anak.Penerima[0].F("pph21"); got != 0 {
+		t.Errorf("PPh 21 GTT bulanan Rp544.000 = %v, want 0", got)
+	}
+	if len(anak.Pajak) != 0 {
+		t.Errorf("baris pajak = %v, want kosong", anak.Pajak)
+	}
+}
+
+func TestBelanjaHonorGTTBulananDigabung(t *testing.T) {
+	setupBelanja(t, true, "")
+	pid := setupHonor(t, "GTT", "", "tidak_tetap")
+	data, anak, err := BelanjaValidate(formHonor(pid, 5000000, ""), 0, 2026)
+	if err != nil {
+		t.Fatalf("validasi: %v", errValidasi(t, err).Errors)
+	}
+	BelanjaCreate(data, anak)
+	// Honor kedua bulan yang sama: total Rp5.500.000 -> TER A 0,25% = Rp13.750.
+	_, anak, err = BelanjaValidate(formHonor(pid, 500000, ""), 0, 2026)
+	if err != nil {
+		t.Fatalf("validasi: %v", errValidasi(t, err).Errors)
+	}
+	if got := anak.Penerima[0].F("pph21"); got != 13750 {
+		t.Errorf("PPh 21 honor kedua = %v, want 13750", got)
+	}
+}
+
+func TestBelanjaSwastaTolakPPNPPh22(t *testing.T) {
+	toko := setupBelanja(t, true, "012345678901234")
+	Q.Run("UPDATE sekolah SET status = 'Swasta' WHERE id = 1")
+	_, _, err := BelanjaValidate(formBelanja(toko, 5000000, true, false, false, true, false), 0, 2026)
+	if err == nil || errValidasi(t, err).Errors["pajak_ppn"] == "" {
+		t.Errorf("PPN sekolah swasta harus ditolak, err = %v", err)
+	}
+	_, _, err = BelanjaValidate(formBelanja(toko, 5000000, false, true, false, false, false), 0, 2026)
+	if err == nil || errValidasi(t, err).Errors["pajak_pph22"] == "" {
+		t.Errorf("PPh 22 sekolah swasta harus ditolak, err = %v", err)
+	}
+}
+
+func TestHitungUlangPPh21HonorBulananLama(t *testing.T) {
+	setupBelanja(t, true, "")
+	pid := setupHonor(t, "GTT", "", "tidak_tetap")
+	data, anak, err := BelanjaValidate(formHonor(pid, 544000, ""), 0, 2026)
+	if err != nil {
+		t.Fatalf("validasi: %v", errValidasi(t, err).Errors)
+	}
+	bid := BelanjaCreate(data, anak)
+	// Data lama: tercatat 1 hari dengan PPh 21 tarif lama 0,5%.
+	Q.Run("UPDATE penerima_belanja SET hari = 1, pph21 = 2720, netto = bruto - 2720 WHERE belanja_id = ?", bid)
+	Q.Insert("pajak", Row{"belanja_id": bid, "jenis": "PPH21", "dpp": 544000, "tarif": 0.5, "nilai": 2720})
+	if n := HitungUlangPPh21(); n != 1 {
+		t.Errorf("transaksi berubah = %d, want 1", n)
+	}
+	r := Q.One("SELECT * FROM penerima_belanja WHERE belanja_id = ?", bid)
+	if r.F("pph21") != 0 || r.F("netto") != 544000 || r.I("hari") != 0 {
+		t.Errorf("penerima setelah hitung ulang = %v", r)
+	}
+	if n := Q.Int("SELECT COUNT(*) FROM pajak WHERE belanja_id = ?", bid); n != 0 {
+		t.Errorf("baris PPh 21 tersisa = %d, want 0", n)
+	}
+}

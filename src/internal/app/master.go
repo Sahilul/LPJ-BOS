@@ -80,8 +80,8 @@ var masterResAll = []*MasterRes{
 		Fields: []MasterField{
 			{Name: "nama", Label: "Nama lengkap", Required: true, Hint: "Tulis beserta gelar, seperti di kuitansi.", Span2: true},
 			{Name: "kategori", Label: "Kategori", Type: "select", Options: masterKategori, Default: "GTT"},
-			{Name: "jenis_penerima", Label: "Jenis penerima (PPh 21)", Type: "select", Options: JenisPenerima, Default: "tidak_tetap", Hint: "Menentukan cara pemotongan PPh 21 menurut PMK 168/2023. PPPK tidak memakai tarif final golongan PNS."},
-			{Name: "ptkp", Label: "Kategori PTKP", Type: "select", Options: PtkpKategori, Default: "A", Hint: "Dipakai untuk tarif efektif bulanan pegawai tetap."},
+			{Name: "jenis_penerima", Label: "Jenis penerima (PPh 21)", Type: "select", Options: JenisPenerima, Default: "tidak_tetap", Hint: "Menentukan cara pemotongan PPh 21 menurut PMK 168/2023. PPPK tidak memakai tarif final golongan PNS. Guru/staf honorer bulanan: pilih pegawai tidak tetap."},
+			{Name: "ptkp", Label: "Kategori PTKP", Type: "select", Options: PtkpKategori, Default: "A", Hint: "Dipakai untuk tarif efektif (TER) bulanan pegawai tetap dan tidak tetap yang dibayar bulanan."},
 			{Name: "golongan", Label: "Golongan", Type: "select", Options: masterGolongan, Hint: "Menentukan tarif final PPh 21 honorarium untuk PNS."},
 			{Name: "nip", Label: "NIP", Type: "digits", Len: 18},
 			{Name: "nik", Label: "NIK", Type: "digits", Len: 16},

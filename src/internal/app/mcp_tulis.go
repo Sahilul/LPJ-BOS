@@ -225,7 +225,7 @@ func mcpTulisBelanja() []McpTool {
 		{"volume", mcpN("Volume, mis. jumlah OJ/hari.")},
 		{"satuan", mcpS("Satuan, mis. OJ, OK.")},
 		{"tarif", mcpN("Tarif per satuan rupiah.")},
-		{"hari", mcpN("Jumlah hari kerja; dipakai menghitung tarif efektif harian pegawai tidak tetap.")},
+		{"hari", mcpN("Jumlah hari kerja, hanya untuk upah harian pegawai tidak tetap (TER harian). Kosongkan/0 untuk honor bulanan (TER bulanan, digabung per bulan).")},
 	}, "penerima_id", "volume", "tarif")
 
 	return []McpTool{

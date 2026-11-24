@@ -167,3 +167,20 @@ func TestJenisPenerimaDariKategori(t *testing.T) {
 		t.Errorf("jenis_penerima tersimpan = %q, want peserta", got)
 	}
 }
+
+func TestTarifTERBulanan(t *testing.T) {
+	cases := []struct {
+		kat   string
+		bruto float64
+		want  float64
+	}{
+		{"A", 544000, 0}, {"A", 5400000, 0}, {"A", 5500000, 0.25},
+		{"B", 6200000, 0}, {"C", 6600000, 0}, {"C", 6700000, 0.25},
+		{"A", 2e9, 34}, {"", 5500000, 0.25},
+	}
+	for _, c := range cases {
+		if got := TarifTERBulanan(c.kat, c.bruto); got != c.want {
+			t.Errorf("TER %s %v = %v, want %v", c.kat, c.bruto, got, c.want)
+		}
+	}
+}

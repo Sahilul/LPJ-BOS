@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 )
 
 var BelanjaMetode = []Opt{{"tunai", "Tunai"}, {"bank", "Transfer / non tunai"}}
@@ -129,6 +130,17 @@ func BelanjaValidate(p Form, id int64, tahun int) (Row, BelanjaAnak, error) {
 		// Nilai nota sudah termasuk PPN, jadi DPP dihitung 11/111 bagian
 		// (PMK 59/2022 Lampiran VI.B.1).
 		ppn := p.Truthy("pajak_ppn")
+		pph22 := p.Truthy("pajak_pph22")
+		if !PPNPPh22Dipungut(Sekolah().S("status")) {
+			if ppn {
+				err.Set("pajak_ppn", "Sekolah swasta: bendahara bukan pemungut PPN (PMK 59/2022 Pasal 2).")
+				ppn = false
+			}
+			if pph22 {
+				err.Set("pajak_pph22", "Sekolah swasta: bendahara bukan pemungut PPh 22 (PMK 59/2022 Pasal 2).")
+				pph22 = false
+			}
+		}
 		dpp := total
 		if ppn {
 			dpp = DPPDariBruto(total)
@@ -140,7 +152,7 @@ func BelanjaValidate(p Form, id int64, tahun int) (Row, BelanjaAnak, error) {
 		for _, pj := range []struct {
 			jenis string
 			on    bool
-		}{{"PPN", ppn}, {"PPH22", p.Truthy("pajak_pph22")}, {"PPH23", p.Truthy("pajak_pph23")}} {
+		}{{"PPN", ppn}, {"PPH22", pph22}, {"PPH23", p.Truthy("pajak_pph23")}} {
 			if !pj.on || total <= 0 {
 				continue
 			}
@@ -180,18 +192,20 @@ func BelanjaValidate(p Form, id int64, tahun int) (Row, BelanjaAnak, error) {
 			seen[pid] = true
 			bruto := math.Round(vol * tarif)
 			// PPh 21 memakai rezim PMK 168/2023: tarif final golongan hanya untuk PNS,
-			// bukan pegawai 50% x Pasal 17, pegawai tidak tetap memakai tarif harian.
+			// bukan pegawai 50% x Pasal 17, pegawai tidak tetap memakai TER bulanan
+			// (hari kosong) atau TER harian (hari diisi).
 			hari := Desimal(r.Str("hari"))
 			pajak := 0.0
 			if data.S("jenis") == "honor" {
-				pajak = PPh21UntukPenerima(m, bruto, hari)
+				brutoLain, pphLain := honorBulananLain(pid, data.S("tgl"), id)
+				pajak = PPh21UntukPenerimaBulan(m, bruto, hari, brutoLain, pphLain)
 			}
 			anak.Penerima = append(anak.Penerima, Row{
 				"penerima_id": pid, "nama": m["nama"], "nip": m["nip"], "npwp": m["npwp"],
 				"kategori": m["kategori"], "golongan": m["golongan"], "jabatan": m["jabatan"],
 				"jenis_penerima": jenisPenerimaDari(m), "ptkp": defaultStr(m.S("ptkp"), "A"),
 				"hari": toInt(hari),
-				"bank":   m["bank"], "no_rekening": m["no_rekening"],
+				"bank": m["bank"], "no_rekening": m["no_rekening"],
 				"volume": vol, "satuan": r.Trim("satuan"), "tarif": tarif,
 				"bruto": bruto, "pph21": pajak, "netto": bruto - pajak,
 			})
@@ -273,6 +287,22 @@ func BelanjaDelete(row Row) error {
 	return nil
 }
 
+// honorBulananLain menjumlah bruto dan PPh 21 honor bulanan (tanpa hari) seorang
+// penerima pada bulan yang sama dari transaksi lain, untuk menentukan TER bulanan.
+func honorBulananLain(penerimaID int64, tgl string, kecuali int64) (bruto, pph float64) {
+	if len(tgl) < 7 {
+		return 0, 0
+	}
+	r := Q.One(`SELECT COALESCE(SUM(pb.bruto), 0) AS bruto, COALESCE(SUM(pb.pph21), 0) AS pph
+		FROM penerima_belanja pb JOIN belanja b ON b.id = pb.belanja_id
+		WHERE pb.penerima_id = ? AND b.jenis = 'honor' AND pb.hari = 0
+		  AND substr(b.tgl, 1, 7) = ? AND b.id != ?`, penerimaID, tgl[:7], kecuali)
+	if r == nil {
+		return 0, 0
+	}
+	return r.F("bruto"), r.F("pph")
+}
+
 func belanjaSaveChildren(id int64, a BelanjaAnak) {
 	simpan := func(tabel string, rows []Row) {
 		for _, r := range rows {
@@ -286,4 +316,103 @@ func belanjaSaveChildren(id int64, a BelanjaAnak) {
 	simpan("item_belanja", a.Items)
 	simpan("penerima_belanja", a.Penerima)
 	simpan("pajak", a.Pajak)
+}
+
+// penandaHitungUlangPPh21 dicatat di tabel migrations agar penghitungan ulang
+// hanya berjalan sekali per database.
+const penandaHitungUlangPPh21 = "011_pph21_ter_bulanan.recalc"
+
+// HitungUlangPPh21Sekali menghitung ulang PPh 21 honor lama satu kali setelah
+// aturan TER bulanan berlaku. Lihat HitungUlangPPh21.
+func HitungUlangPPh21Sekali() {
+	if Q.Int("SELECT COUNT(*) FROM migrations WHERE name = ?", penandaHitungUlangPPh21) > 0 {
+		return
+	}
+	Q.Tx(func() {
+		HitungUlangPPh21()
+		Q.Run("INSERT INTO migrations (name, applied_at) VALUES (?, ?)", penandaHitungUlangPPh21, time.Now().Format("2006-01-02T15:04:05-07:00"))
+	})
+}
+
+// HitungUlangPPh21 menghitung ulang PPh 21 semua transaksi honor memakai data
+// penerima yang tersimpan di transaksi, urut tanggal agar honor bulanan digabung
+// per bulan. Transaksi yang PPh 21-nya sudah disetor (ada NTPN/tanggal setor)
+// tidak diubah, tetapi tetap ikut dijumlahkan. Mengembalikan jumlah transaksi
+// yang berubah.
+func HitungUlangPPh21() int {
+	type kunci struct {
+		pid   int64
+		bulan string
+	}
+	sudah := map[kunci][2]float64{}
+	berubah := 0
+	for _, b := range Q.All("SELECT id, tgl FROM belanja WHERE jenis = 'honor' ORDER BY tgl, id") {
+		bid := b.I("id")
+		bulan := b.S("tgl")
+		if len(bulan) >= 7 {
+			bulan = bulan[:7]
+		}
+		pj := Q.One("SELECT * FROM pajak WHERE belanja_id = ? AND jenis = 'PPH21' ORDER BY id LIMIT 1", bid)
+		terkunci := pj != nil && (pj.S("ntpn") != "" || pj.S("tgl_setor") != "")
+		pphDpp, pphNilai, ubah := 0.0, 0.0, false
+		for _, r := range Q.All("SELECT * FROM penerima_belanja WHERE belanja_id = ? ORDER BY id", bid) {
+			k := kunci{r.I("penerima_id"), bulan}
+			hari := r.F("hari")
+			if !terkunci {
+				// Data penerima terbaru dipakai seperti saat transaksi disimpan ulang.
+				if m := Q.One("SELECT * FROM penerima WHERE id = ?", k.pid); m != nil {
+					r["kategori"], r["golongan"] = m["kategori"], m["golongan"]
+					r["jenis_penerima"], r["ptkp"] = jenisPenerimaDari(m), defaultStr(m.S("ptkp"), "A")
+				}
+				// Form lama menampilkan hari kosong sebagai 1, sehingga honor bulanan
+				// yang disimpan ulang tercatat 1 hari dan terkena tarif harian.
+				if hari == 1 && !PPh21PNSFinal(r) && jenisPenerimaDari(r) == "tidak_tetap" {
+					hari = 0
+				}
+			}
+			bulanan := hari <= 0 && k.pid != 0
+			pph := r.F("pph21")
+			if !terkunci {
+				lain := [2]float64{}
+				if bulanan {
+					lain = sudah[k]
+				}
+				pph = PPh21UntukPenerimaBulan(r, r.F("bruto"), hari, lain[0], lain[1])
+				Q.Run("UPDATE penerima_belanja SET pph21 = ?, netto = bruto - ?, hari = ?, jenis_penerima = ?, ptkp = ? WHERE id = ?",
+					pph, pph, toInt(hari), r.S("jenis_penerima"), r.S("ptkp"), r.I("id"))
+				if pph != r.F("pph21") {
+					ubah = true
+				}
+			}
+			if bulanan {
+				s := sudah[k]
+				sudah[k] = [2]float64{s[0] + r.F("bruto"), s[1] + pph}
+			}
+			if pph > 0 {
+				pphDpp += r.F("bruto")
+				pphNilai += pph
+			}
+		}
+		if terkunci {
+			continue
+		}
+		switch {
+		case pphNilai <= 0 && pj != nil:
+			Q.Run("DELETE FROM pajak WHERE belanja_id = ? AND jenis = 'PPH21'", bid)
+			ubah = true
+		case pphNilai > 0:
+			tarif := math.Round(pphNilai/pphDpp*100*100) / 100
+			if pj == nil {
+				Q.Insert("pajak", Row{"belanja_id": bid, "jenis": "PPH21", "dpp": pphDpp, "tarif": tarif, "nilai": pphNilai, "tgl_pungut": b.S("tgl")})
+				ubah = true
+			} else if pj.F("nilai") != pphNilai || pj.F("dpp") != pphDpp {
+				Q.Run("UPDATE pajak SET dpp = ?, tarif = ?, nilai = ? WHERE id = ?", pphDpp, tarif, pphNilai, pj.I("id"))
+				ubah = true
+			}
+		}
+		if ubah {
+			berubah++
+		}
+	}
+	return berubah
 }

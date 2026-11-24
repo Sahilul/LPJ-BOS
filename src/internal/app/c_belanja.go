@@ -160,7 +160,7 @@ func belanjaForm(c *Ctx, row Row) {
 			pens = append(pens, belanjaPenView{
 				PenerimaID: toStr(p["penerima_id"]), Volume: fmtVol(p["volume"]), Satuan: p.S("satuan"),
 				Tarif: fmtHarga(p["tarif"]), PackageVolume: pv, Ket: penerimaKet(p.I("penerima_id")),
-				Hari: fmtVol(p["hari"]),
+				Hari: hariView(p["hari"]),
 			})
 		}
 	}
@@ -198,6 +198,10 @@ func belanjaForm(c *Ctx, row Row) {
 		p["ket"] = strings.TrimPrefix(ket, " · ")
 		p["pph"] = TarifPPh21(p)
 		p["jenis_pen"] = jenisPenerimaDari(p)
+		if PPh21PNSFinal(p) {
+			p["jenis_pen"] = "pns"
+		}
+		p["ptkp"] = defaultStr(p.S("ptkp"), "A")
 		list = append(list, p)
 	}
 
@@ -230,13 +234,15 @@ func belanjaForm(c *Ctx, row Row) {
 	c.View("belanja/form", D{
 		"title": title, "edit": edit, "row": row,
 		"rencana": rencana, "penerimaList": list,
-		"toko":     Q.All("SELECT id, nama, pkp, npwp FROM toko WHERE aktif = 1 OR id = ? ORDER BY nama", row.I("toko_id")),
-		"lampiran": lampiran,
-		"saldo":    saldo,
-		"tarif":    D{"PPN": TarifPajak("PPN"), "PPH22": TarifPajak("PPH22"), "PPH23": TarifPajak("PPH23")},
-		"batas":    BatasPajakPPN,
+		"toko":       Q.All("SELECT id, nama, pkp, npwp FROM toko WHERE aktif = 1 OR id = ? ORDER BY nama", row.I("toko_id")),
+		"lampiran":   lampiran,
+		"saldo":      saldo,
+		"tarif":      D{"PPN": TarifPajak("PPN"), "PPH22": TarifPajak("PPH22"), "PPH23": TarifPajak("PPH23")},
+		"batas":      BatasPajakPPN,
 		"batasPPh22": BatasPPh22,
 		"danaBOS":    danaBOS,
+		"swasta":     !PPNPPh22Dipungut(Sekolah().S("status")),
+		"honorBulan": honorBulananPerPenerima(editId),
 		"viaSiplah":  viaSiplah,
 		"items":      items, "pens": pens,
 		"jenis": jenis, "periode": periode, "satDefault": satDefault,
@@ -251,6 +257,33 @@ func belanjaForm(c *Ctx, row Row) {
 		"chkPPH23":   chk("pajak_pph23", "PPH23"),
 		"metodeOpts": BelanjaMetode,
 	})
+}
+
+// hariView: hari 0 berarti dibayar bulanan, ditampilkan kosong.
+func hariView(v any) string {
+	if toFloat(v) <= 0 {
+		return ""
+	}
+	return fmtVol(v)
+}
+
+// honorBulananPerPenerima: bruto dan PPh 21 honor bulanan (tanpa hari) per
+// penerima per bulan dari transaksi lain, untuk perkiraan TER bulanan di form.
+// Bentuk: {"penerima_id": {"YYYY-MM": [bruto, pph]}}.
+func honorBulananPerPenerima(kecuali int64) map[string]map[string][2]float64 {
+	out := map[string]map[string][2]float64{}
+	for _, r := range Q.All(`SELECT pb.penerima_id AS pid, substr(b.tgl, 1, 7) AS bulan,
+			SUM(pb.bruto) AS bruto, SUM(pb.pph21) AS pph
+		FROM penerima_belanja pb JOIN belanja b ON b.id = pb.belanja_id
+		WHERE b.jenis = 'honor' AND pb.hari = 0 AND pb.penerima_id IS NOT NULL AND b.id != ?
+		GROUP BY pb.penerima_id, bulan`, kecuali) {
+		k := toStr(r["pid"])
+		if out[k] == nil {
+			out[k] = map[string][2]float64{}
+		}
+		out[k][r.S("bulan")] = [2]float64{r.F("bruto"), r.F("pph")}
+	}
+	return out
 }
 
 // penerimaKet: ringkasan kategori/golongan/jabatan untuk opsi penerima.

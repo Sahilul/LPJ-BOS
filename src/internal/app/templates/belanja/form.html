@@ -9,7 +9,8 @@
 <form class="belanja-form" method="post" action="/belanja{{if .edit}}/{{$row.I "id"}}{{end}}" novalidate data-belanja{{if .edit}} data-edit="1"{{end}}
       data-saldo-tunai="{{.saldo.Tunai}}" data-saldo-bank="{{.saldo.Bank}}"
       data-tarif-ppn="{{.tarif.PPN}}" data-tarif-pph22="{{.tarif.PPH22}}" data-tarif-pph23="{{.tarif.PPH23}}"
-      data-batas="{{.batas}}" data-batas-pph22="{{.batasPPh22}}" data-pkp="{{if .tokoPKPSelected}}1{{else}}0{{end}}">
+      data-batas="{{.batas}}" data-batas-pph22="{{.batasPPh22}}" data-pkp="{{if .tokoPKPSelected}}1{{else}}0{{end}}"{{if .swasta}} data-swasta="1"{{end}}
+      data-honor-bulan="{{json .honorBulan}}">
   {{$C.CSRFField}}
 
   <div class="belanja-layout">
@@ -65,11 +66,11 @@
       <section class="card" data-only="barang" aria-labelledby="h-pajak">
         <div class="card-head"><h2 id="h-pajak">Pajak dipungut</h2></div>
         <div class="card-body">
-          <p class="muted small" style="margin:0 0 12px" data-pajak-saran>PPN dipungut bila rekanan PKP dan nilai di luar PPN di atas {{rupiah .batas}}.</p>
+          <p class="muted small" style="margin:0 0 12px" data-pajak-saran>{{if .swasta}}Sekolah swasta: bendahara bukan pemungut PPN dan PPh 22. PPh 23 tetap dipotong untuk jasa/sewa, tanpa batas minimal.{{else}}PPN dipungut bila rekanan PKP dan nilai di luar PPN di atas {{rupiah .batas}}.{{end}}</p>
           <div class="tax-list">
-            <label class="check"><input type="checkbox" name="pajak_ppn" value="1" data-pajak="ppn"{{if .chkPPN}} checked{{end}}><span>PPN {{persen .tarif.PPN}} (11/111 dari nota)</span><output class="mono" data-pajak-out="ppn">Rp0</output></label>
-            <label class="check"><input type="checkbox" name="pajak_pph22" value="1" data-pajak="pph22"{{if .chkPPH22}} checked{{end}}><span>PPh 22 <span data-pph22-tarif>{{persen .tarif.PPH22}}</span></span><output class="mono" data-pajak-out="pph22">Rp0</output></label>
-            <label class="check"><input type="checkbox" name="pajak_pph23" value="1" data-pajak="pph23"{{if .chkPPH23}} checked{{end}}><span>PPh 23 <span data-pph23-tarif>{{persen .tarif.PPH23}}</span> (jasa)</span><output class="mono" data-pajak-out="pph23">Rp0</output></label>
+            {{if not .swasta}}<label class="check"><input type="checkbox" name="pajak_ppn" value="1" data-pajak="ppn"{{if .chkPPN}} checked{{end}}><span>PPN {{persen .tarif.PPN}} (11/111 dari nota)</span><output class="mono" data-pajak-out="ppn">Rp0</output></label>
+            <label class="check"><input type="checkbox" name="pajak_pph22" value="1" data-pajak="pph22"{{if .chkPPH22}} checked{{end}}><span>PPh 22 <span data-pph22-tarif>{{persen .tarif.PPH22}}</span></span><output class="mono" data-pajak-out="pph22">Rp0</output></label>{{end}}
+            <label class="check"><input type="checkbox" name="pajak_pph23" value="1" data-pajak="pph23"{{if .chkPPH23}} checked{{end}}><span>PPh 23 <span data-pph23-tarif>{{persen .tarif.PPH23}}</span> (jasa/sewa, termasuk rekanan orang pribadi)</span><output class="mono" data-pajak-out="pph23">Rp0</output></label>
           </div>
           {{with $C.FieldError "pajak_ppn"}}<p class="error" style="margin:8px 0 0">{{.}}</p>{{end}}
           {{with $C.FieldError "pajak_pph22"}}<p class="error" style="margin:8px 0 0">{{.}}</p>{{end}}
