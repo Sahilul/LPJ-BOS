@@ -465,13 +465,53 @@
     const $$ = (sel, root = form) => [...root.querySelectorAll(sel)];
     const rencana = $('[data-rencana]');
     const metode = $('[data-metode]');
-    const toko = $('[data-toko]');
+    // Selector harus spesifik: elemen <option> rencana juga memakai atribut
+    // data-toko, sehingga '[data-toko]' bisa salah menunjuk option.
+    const toko = $('select[data-toko]');
     const uraian = $('input[data-uraian]');
     const periode = $('[data-periode]');
     const periodeHint = $('[data-periode-hint]');
     let autoUraian = rencana.selectedOptions[0]?.dataset.uraian || '';
     const tarif = { ppn: +form.dataset.tarifPpn, pph22: +form.dataset.tarifPph22, pph23: +form.dataset.tarifPph23 };
     const batas = +form.dataset.batas;
+    const batasPPh22 = +form.dataset.batasPph22;
+    // persen: tampilkan tarif tanpa nol berlebih, mis. 1,5% atau 2%.
+    const persen = (n) => `${String(Number(n.toFixed(2))).replace('.', ',')}%`;
+    const danaBOS = () => $('[data-dana-bos]')?.checked ?? true;
+    const viaSiplah = () => $('[data-siplah]')?.checked ?? false;
+    // Nilai nota sudah termasuk PPN, jadi DPP = 11/111 bagian dari pembayaran
+    // (PMK 59/2022 Lampiran VI.B.1).
+    const dppDari = (bruto) => Math.round(bruto * 100 / (100 + tarif.ppn));
+    // Tarif PPh 22 dan PPh 23 naik 100% bila rekanan tidak dapat menunjukkan NPWP.
+    const tarifPph = (dasar, punyaNPWP) => (punyaNPWP ? dasar : dasar * 2);
+    const pasal17 = (pkp) => {
+      const lap = [[0, 60e6, 0.05], [60e6, 250e6, 0.15], [250e6, 500e6, 0.25], [500e6, 5e9, 0.3], [5e9, Infinity, 0.35]];
+      let p = 0;
+      for (const [bawah, atas, r] of lap) {
+        if (pkp <= bawah) break;
+        p += (Math.min(pkp, atas) - bawah) * r;
+      }
+      return Math.round(p);
+    };
+    // PPh 21 per rezim PMK 168/2023. Jenis penerima ditandai pada opsi penerima.
+    const pph21 = (bruto, opt, hari) => {
+      if (!bruto) return 0;
+      const jenis = opt?.dataset?.jenisPen || 'tidak_tetap';
+      const gol = opt?.dataset?.gol || '';
+      if (jenis === 'pns') {
+        if (/^(I|II)/.test(gol)) return 0;
+        if (/^III/.test(gol)) return Math.round(bruto * 0.05);
+        if (/^IV/.test(gol)) return Math.round(bruto * 0.15);
+        return 0;
+      }
+      if (jenis === 'bukan_pegawai') return pasal17(bruto * 0.5);
+      if (jenis === 'peserta') return pasal17(bruto);
+      if (jenis === 'tetap') return pasal17(bruto);
+      // Pegawai tidak tetap: tarif efektif harian bila upah sehari <= Rp2.500.000.
+      const sehari = bruto / Math.max(1, hari || 1);
+      if (sehari > 2500000) return pasal17(bruto * 0.5);
+      return sehari <= 450000 ? 0 : Math.round(bruto * 0.005);
+    };
     const out = (k) => $(`[data-out="${k}"]`);
     let counter = 1000;
 
@@ -574,25 +614,64 @@
           total += sub;
         });
         const ppnOn = $('[data-pajak=ppn]').checked;
-        const dpp = ppnOn ? Math.round(total * 100 / (100 + tarif.ppn)) : total;
+        const sel = toko?.options?.[toko.selectedIndex];
+        const pkp = sel?.dataset?.pkp === '1';
+        const punyaNPWP = sel?.dataset?.npwp === '1';
+        const siplah = viaSiplah();
+        const bos = danaBOS();
+        // Batas Rp2.000.000 dibandingkan dengan nilai di luar PPN, bukan total nota
+        // (PMK 59/2022 Pasal 18 ayat (1) huruf a).
+        const dpp = ppnOn ? dppDari(total) : total;
+        const tarifKini = {
+          ppn: tarif.ppn,
+          pph22: tarifPph(tarif.pph22, punyaNPWP),
+          pph23: tarifPph(tarif.pph23, punyaNPWP),
+        };
+        // PPh 22 tidak dipungut untuk dana BOS maupun transaksi lewat SIPLah.
+        const pph22Berlaku = !siplah && !bos && dpp > batasPPh22;
         $$('[data-pajak]').forEach((cb) => {
-          const v = cb.checked ? Math.round(dpp * tarif[cb.dataset.pajak] / 100) : 0;
-          $(`[data-pajak-out="${cb.dataset.pajak}"]`).textContent = rp(v);
+          const jenis = cb.dataset.pajak;
+          let v = 0;
+          if (cb.checked) {
+            if (jenis === 'pph22' && !pph22Berlaku) v = 0;
+            else v = Math.round(dpp * tarifKini[jenis] / 100);
+          }
+          const outEl = $(`[data-pajak-out="${jenis}"]`);
+          if (outEl) outEl.textContent = rp(v);
           pajak += v;
         });
-        const pkp = toko?.options?.[toko.selectedIndex]?.dataset?.pkp === '1';
+        const pph22Cb = $('[data-pajak=pph22]');
+        if (pph22Cb) pph22Cb.closest('label').hidden = !pph22Berlaku;
+        const pph22Label = $('[data-pph22-tarif]');
+        if (pph22Label) pph22Label.textContent = persen(tarifKini.pph22);
+        const pph23Label = $('[data-pph23-tarif]');
+        if (pph23Label) pph23Label.textContent = persen(tarifKini.pph23);
         const saran = $('[data-pajak-saran]');
         if (saran) {
-          saran.textContent = pkp && total > batas
-            ? `Toko PKP dan nilai di atas ${rp(batas)}: centang PPN dan PPh 22.`
-            : `PPN dan PPh 22 berlaku bila toko PKP dan nilai transaksi di atas ${rp(batas)}.`;
-          saran.classList.toggle('is-warn', pkp && total > batas && !($('[data-pajak=ppn]').checked && $('[data-pajak=pph22]').checked));
+          const bisaPPN = pkp && !siplah && dpp > batas;
+          const bagian = [];
+          bagian.push(siplah
+            ? 'Transaksi lewat SIPLah: PPN dan PPh 22 dipungut platform, bendahara tidak memungut lagi.'
+            : (!pkp
+              ? 'Rekanan bukan PKP: PPN tidak dipungut.'
+              : (dpp > batas
+                ? `Nilai di luar PPN di atas ${rp(batas)}: PPN dipungut (11/111 dari nota).`
+                : `Nilai di luar PPN paling banyak ${rp(batas)}: PPN tidak dipungut.`)));
+          if (!siplah) {
+            bagian.push(bos
+              ? 'Dana BOS: pembelian barang tidak dipungut PPh 22.'
+              : (dpp > batasPPh22 ? 'PPh 22 dipungut 1,5% dari nilai di luar PPN.' : `PPh 22 tidak dipungut: nilai di luar PPN paling banyak ${rp(batasPPh22)}.`));
+          }
+          saran.textContent = bagian.join(' ');
+          saran.classList.toggle('is-warn', bisaPPN && !$('[data-pajak=ppn]').checked);
         }
       } else {
         $$('[data-rows=pen] tbody tr').forEach((tr) => {
           const opt = tr.querySelector('[data-pen]').selectedOptions[0];
+          const hariEl = tr.querySelector('[data-hari]');
+          const hari = hariEl ? desimal(hariEl.value) : 0;
           const bruto = Math.round(desimal(tr.querySelector('[data-vol]').value) * uang(tr.querySelector('[data-harga]').value));
-          const pph = j === 'honor' && opt?.value ? Math.round(bruto * (+opt.dataset.pph || 0) / 100) : 0;
+          const pph = j === 'honor' && opt?.value ? pph21(bruto, opt, hari) : 0;
           tr.querySelector('[data-sub]').textContent = rp(bruto);
           tr.querySelector('td[data-pph]').textContent = rp(pph);
           tr.querySelector('[data-netto]').textContent = rp(bruto - pph);

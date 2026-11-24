@@ -52,6 +52,18 @@ func BelanjaValidate(p Form, id int64, tahun int) (Row, BelanjaAnak, error) {
 		"metode":         metode,
 		"toko_id":        nil,
 		"total":          0.0,
+		// Dana BOS adalah sumber dana bawaan aplikasi ini; PPh 22 atas
+		// pembelian barang dengan dana BOS dikecualikan.
+		"dana_bos":   0,
+		"via_siplah": 0,
+	}
+	// Checkbox yang tidak dicentang tidak dikirim browser, jadi ketiadaan kunci
+	// berarti tidak dicentang. Form belanja selalu mengirim dana_bos=1 secara bawaan.
+	if p.Truthy("dana_bos") {
+		data["dana_bos"] = 1
+	}
+	if p.Truthy("via_siplah") {
+		data["via_siplah"] = 1
 	}
 	if rencana != nil {
 		data["rencana_id"] = rencana.I("id")
@@ -114,19 +126,37 @@ func BelanjaValidate(p Form, id int64, tahun int) (Row, BelanjaAnak, error) {
 		if _, ada := err.Errors["items"]; len(anak.Items) == 0 && !ada {
 			err.Set("items", "Tambahkan minimal satu barang atau jasa.")
 		}
+		// Nilai nota sudah termasuk PPN, jadi DPP dihitung 11/111 bagian
+		// (PMK 59/2022 Lampiran VI.B.1).
 		ppn := p.Truthy("pajak_ppn")
 		dpp := total
 		if ppn {
-			dpp = math.Round(total * 100 / (100 + TarifPajak("PPN")))
+			dpp = DPPDariBruto(total)
 		}
+		if ppn && total > 0 && !PPNPerluDipungut(total) {
+			err.Set("pajak_ppn", "PPN tidak dipungut: nilai di luar PPN paling banyak "+Rupiah(BatasPajakPPN)+".")
+		}
+		punyaNPWP := tokoNPWPAda(data["toko_id"])
 		for _, pj := range []struct {
 			jenis string
 			on    bool
 		}{{"PPN", ppn}, {"PPH22", p.Truthy("pajak_pph22")}, {"PPH23", p.Truthy("pajak_pph23")}} {
-			if pj.on && total > 0 {
-				t := TarifPajak(pj.jenis)
-				anak.Pajak = append(anak.Pajak, Row{"jenis": pj.jenis, "dpp": dpp, "tarif": t, "nilai": math.Round(dpp * t / 100), "tgl_pungut": data.S("tgl")})
+			if !pj.on || total <= 0 {
+				continue
 			}
+			t := TarifPajak(pj.jenis)
+			switch pj.jenis {
+			case "PPH22":
+				// Dana BOS dikecualikan dari PPh 22 (PMK 59/2022 Pasal 12 ayat (2) huruf d).
+				if !PPh22PerluDipungut(dpp, data.I("dana_bos") == 1, data.I("via_siplah") == 1) {
+					err.Set("pajak_pph22", "PPh 22 tidak dipungut untuk transaksi ini: pembelian barang dana BOS dikecualikan (PMK 59/2022 Pasal 12 ayat (2) huruf d).")
+					continue
+				}
+				t = TarifPPh22(punyaNPWP)
+			case "PPH23":
+				t = TarifPPh23(punyaNPWP)
+			}
+			anak.Pajak = append(anak.Pajak, Row{"jenis": pj.jenis, "dpp": dpp, "tarif": t, "nilai": math.Round(dpp * t / 100), "tgl_pungut": data.S("tgl")})
 		}
 	} else {
 		pphDpp, pphNilai := 0.0, 0.0
@@ -149,15 +179,19 @@ func BelanjaValidate(p Form, id int64, tahun int) (Row, BelanjaAnak, error) {
 			}
 			seen[pid] = true
 			bruto := math.Round(vol * tarif)
-			t := 0.0
+			// PPh 21 memakai rezim PMK 168/2023: tarif final golongan hanya untuk PNS,
+			// bukan pegawai 50% x Pasal 17, pegawai tidak tetap memakai tarif harian.
+			hari := Desimal(r.Str("hari"))
+			pajak := 0.0
 			if data.S("jenis") == "honor" {
-				t = TarifPPh21(m)
+				pajak = PPh21UntukPenerima(m, bruto, hari)
 			}
-			pajak := math.Round(bruto * t / 100)
 			anak.Penerima = append(anak.Penerima, Row{
 				"penerima_id": pid, "nama": m["nama"], "nip": m["nip"], "npwp": m["npwp"],
 				"kategori": m["kategori"], "golongan": m["golongan"], "jabatan": m["jabatan"],
-				"bank": m["bank"], "no_rekening": m["no_rekening"],
+				"jenis_penerima": jenisPenerimaDari(m), "ptkp": defaultStr(m.S("ptkp"), "A"),
+				"hari": toInt(hari),
+				"bank":   m["bank"], "no_rekening": m["no_rekening"],
 				"volume": vol, "satuan": r.Trim("satuan"), "tarif": tarif,
 				"bruto": bruto, "pph21": pajak, "netto": bruto - pajak,
 			})

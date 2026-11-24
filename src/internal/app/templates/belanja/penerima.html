@@ -8,16 +8,17 @@
   {{end}}
   <div class="rows-editor" data-rows="pen">
     <table class="table">
-      <thead><tr><th>Penerima</th><th style="width:88px">Volume</th><th style="width:100px">Satuan</th><th style="width:160px">Tarif</th><th class="num" style="width:120px">Bruto</th><th class="num" style="width:110px" data-only="honor">PPh 21</th><th class="num" style="width:120px">Diterima</th><th style="width:52px"><span class="sr-only">Hapus</span></th></tr></thead>
+      <thead><tr><th>Penerima</th><th style="width:88px">Volume</th><th style="width:100px">Satuan</th><th style="width:80px" data-only="honor">Hari</th><th style="width:160px">Tarif</th><th class="num" style="width:120px">Bruto</th><th class="num" style="width:110px" data-only="honor">PPh 21</th><th class="num" style="width:120px">Diterima</th><th style="width:52px"><span class="sr-only">Hapus</span></th></tr></thead>
       <tbody>
         {{range $i, $p := .pens}}
         <tr>
           <td data-label="Penerima"><select class="input" name="pen[{{$i}}][penerima_id]" aria-label="Penerima" data-pen>
             <option value="">— Pilih penerima —</option>
-            {{range $.penerimaList}}<option value="{{.I "id"}}" data-tarif="{{.F "tarif_default"}}" data-pph="{{.F "pph"}}"{{if eq (str (.I "id")) $p.PenerimaID}} selected{{end}}>{{.S "nama"}}{{if .S "ket"}} — {{.S "ket"}}{{end}}</option>{{end}}
+            {{range $.penerimaList}}<option value="{{.I "id"}}" data-tarif="{{.F "tarif_default"}}" data-pph="{{.F "pph"}}" data-jenis-pen="{{.S "jenis_pen"}}" data-gol="{{.S "golongan"}}"{{if eq (str (.I "id")) $p.PenerimaID}} selected{{end}}>{{.S "nama"}}{{if .S "ket"}} — {{.S "ket"}}{{end}}</option>{{end}}
           </select></td>
           <td data-label="Volume"><input class="input mono" name="pen[{{$i}}][volume]" value="{{$p.Volume}}"{{if $p.PackageVolume}} data-package-volume="{{$p.PackageVolume}}"{{end}} inputmode="decimal" aria-label="Volume" data-vol autocomplete="off"></td>
           <td data-label="Satuan"><input class="input" name="pen[{{$i}}][satuan]" value="{{$p.Satuan}}" aria-label="Satuan" placeholder="OJ, OK, OH" data-satuan></td>
+          <td data-label="Hari" data-only="honor" title="Jumlah hari kerja, dipakai menghitung tarif efektif harian pegawai tidak tetap"><input class="input mono" name="pen[{{$i}}][hari]" value="{{$p.Hari}}" inputmode="numeric" aria-label="Jumlah hari kerja" data-hari autocomplete="off"></td>
           <td data-label="Tarif"><input class="input mono" name="pen[{{$i}}][tarif]" value="{{$p.Tarif}}" inputmode="numeric" aria-label="Tarif" data-money data-harga autocomplete="off"></td>
           <td class="num mono" data-label="Bruto" data-sub>0</td>
           <td class="num mono" data-label="PPh 21" data-only="honor" data-pph>0</td>
@@ -31,10 +32,11 @@
       <tr>
         <td data-label="Penerima"><select class="input" name="pen[__i__][penerima_id]" aria-label="Penerima" data-pen>
           <option value="">— Pilih penerima —</option>
-          {{range .penerimaList}}<option value="{{.I "id"}}" data-tarif="{{.F "tarif_default"}}" data-pph="{{.F "pph"}}">{{.S "nama"}}{{if .S "ket"}} — {{.S "ket"}}{{end}}</option>{{end}}
+          {{range .penerimaList}}<option value="{{.I "id"}}" data-tarif="{{.F "tarif_default"}}" data-pph="{{.F "pph"}}" data-jenis-pen="{{.S "jenis_pen"}}" data-gol="{{.S "golongan"}}">{{.S "nama"}}{{if .S "ket"}} — {{.S "ket"}}{{end}}</option>{{end}}
         </select></td>
         <td data-label="Volume"><input class="input mono" name="pen[__i__][volume]" value="1" inputmode="decimal" aria-label="Volume" data-vol autocomplete="off"></td>
         <td data-label="Satuan"><input class="input" name="pen[__i__][satuan]" value="{{.satDefault}}" aria-label="Satuan" data-satuan></td>
+        <td data-label="Hari" data-only="honor"><input class="input mono" name="pen[__i__][hari]" value="" inputmode="numeric" aria-label="Jumlah hari kerja" data-hari autocomplete="off"></td>
         <td data-label="Tarif"><input class="input mono" name="pen[__i__][tarif]" inputmode="numeric" aria-label="Tarif" data-money data-harga autocomplete="off"></td>
         <td class="num mono" data-label="Bruto" data-sub>0</td>
         <td class="num mono" data-label="PPh 21" data-only="honor" data-pph>0</td>

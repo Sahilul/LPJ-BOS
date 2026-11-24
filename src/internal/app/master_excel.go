@@ -18,6 +18,8 @@ var penerimaCols = []struct{ Key, Label string }{
 	{"nik", "NIK"},
 	{"npwp", "NPWP"},
 	{"kategori", "Kategori (PNS/PPPK/GTT/PTT/Luar)"},
+	{"jenis_penerima", "Jenis Penerima (tetap/tidak_tetap/bukan_pegawai/peserta)"},
+	{"ptkp", "Kategori PTKP (A/B/C)"},
 	{"golongan", "Golongan (I/II/III/IV/IX)"},
 	{"jabatan", "Jabatan"},
 	{"no_hp", "No HP"},
@@ -167,6 +169,33 @@ func penerimaImporBaris(rows [][]string) (added, updated int, err error) {
 					g = g[:i]
 				}
 				row["golongan"] = strings.TrimSpace(g)
+			}
+			// Jenis penerima dan PTKP menentukan rezim PPh 21; kosongkan agar
+			// diturunkan dari kategori, dan tolak nilai yang tidak dikenal.
+			if v := strings.ToLower(row.S("jenis_penerima")); v != "" {
+				valid := false
+				for _, o := range JenisPenerima {
+					if o.K == v {
+						valid = true
+						break
+					}
+				}
+				if valid {
+					row["jenis_penerima"] = v
+				} else {
+					delete(row, "jenis_penerima")
+				}
+			} else {
+				delete(row, "jenis_penerima")
+			}
+			if v := strings.ToUpper(row.S("ptkp")); v != "" {
+				if v == "A" || v == "B" || v == "C" {
+					row["ptkp"] = v
+				} else {
+					delete(row, "ptkp")
+				}
+			} else {
+				delete(row, "ptkp")
 			}
 			if _, ok := row["tarif_default"]; ok {
 				row["tarif_default"] = Uang(row.S("tarif_default"))

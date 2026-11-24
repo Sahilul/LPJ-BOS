@@ -225,6 +225,7 @@ func mcpTulisBelanja() []McpTool {
 		{"volume", mcpN("Volume, mis. jumlah OJ/hari.")},
 		{"satuan", mcpS("Satuan, mis. OJ, OK.")},
 		{"tarif", mcpN("Tarif per satuan rupiah.")},
+		{"hari", mcpN("Jumlah hari kerja; dipakai menghitung tarif efektif harian pegawai tidak tetap.")},
 	}, "penerima_id", "volume", "tarif")
 
 	return []McpTool{
@@ -245,8 +246,10 @@ func mcpTulisBelanja() []McpTool {
 				{"toko_id", mcpI("ID toko/penyedia (barang).")},
 				{"items", mcpArr("Rincian barang/jasa.", item)},
 				{"pajak_ppn", mcpB("Harga sudah termasuk PPN.")},
-				{"pajak_pph22", mcpB("Pungut PPh 22.")},
+				{"pajak_pph22", mcpB("Pungut PPh 22. Ditolak untuk dana BOS karena dikecualikan PMK 59/2022 Pasal 12 ayat (2) huruf d.")},
 				{"pajak_pph23", mcpB("Pungut PPh 23.")},
+				{"dana_bos", mcpB("Pembelian barang memakai dana BOS/BOSP; PPh 22 tidak dipungut.")},
+				{"via_siplah", mcpB("Transaksi lewat SIPLah; PPN dan PPh 22 dipungut platform.")},
 				{"pen", mcpArr("Penerima honor/transport.", pen)},
 			}, "rencana_id", "tgl", "jumlah_periode", "uraian", "metode"),
 			Handler: func(a McpArgs) (any, error) {

@@ -100,9 +100,11 @@ Daftar orang yang bisa menerima honor/transport, sehingga cukup dipilih saat inp
 |---|---|
 | Nama lengkap (+ gelar) | Wajib |
 | NIP / NIK | NIP untuk PNS/PPPK, NIK untuk non-ASN/pihak luar |
-| NPWP | Opsional. Jika kosong, tarif PPh 21 dikenai tarif lebih tinggi sesuai aturan |
+| NPWP | Opsional. Untuk penerima PNS, tarif final honor tidak berubah; untuk rekanan (toko), NPWP menentukan tarif PPh 22 dan PPh 23 |
 | Kategori | PNS, PPPK, GTT/Honorer, PTT/Tendik, Pihak Luar (narasumber, pelatih, dll) |
-| Golongan | Mis. III/a, IV/b. Dipakai untuk tarif PPh 21 PNS (gol. I–II 0%, III 5%, IV 15%) |
+| Jenis penerima (PPh 21) | Pegawai tetap/PPPK, pegawai tidak tetap, bukan pegawai, peserta kegiatan. Menentukan rezim pemotongan menurut PMK 168/2023 |
+| Kategori PTKP | A/B/C, dipakai untuk tarif efektif bulanan pegawai tetap |
+| Golongan | Mis. III/a, IV/b. Dipakai untuk tarif final PPh 21 PNS (gol. I–II 0%, III 5%, IV 15%). PPPK tidak memakai tarif final ini |
 | Jabatan | Mis. Guru Kelas 4, Operator, Penjaga Sekolah, Pembina Pramuka |
 | No. HP, alamat | Opsional |
 | Bank, no. rekening, atas nama | Opsional, untuk pembayaran transfer |
@@ -179,7 +181,7 @@ Jenis transaksi bisa ditentukan otomatis dari kode rekening rencana belanja (mis
 
 ### 2.7 Honor & Transport (Penerima)
 - Setiap transaksi honor/transport berisi **daftar penerima**: nama, NIP/NIK, jabatan/golongan, volume, satuan, tarif, jumlah bruto, PPh 21, jumlah diterima (netto).
-- **PPh 21** dihitung otomatis untuk honor sesuai status/golongan dan tarif di pengaturan pajak, dan masuk Buku Pembantu Pajak. Transport secara default tidak dipotong pajak, tetapi tetap bisa diatur.
+- **PPh 21** dihitung otomatis untuk honor sesuai rezim penerima (PMK 168/2023): PNS memakai tarif final golongan (I–II 0%, III 5%, IV 15%), bukan pegawai 50% × tarif Pasal 17 (efektif 2,5% pada lapisan pertama), pegawai tidak tetap memakai tarif efektif harian (0% s.d. Rp450.000, 0,5% s.d. Rp2.500.000 sehari), peserta kegiatan memakai bruto utuh. PPPK tidak memakai tarif final PNS. Semua masuk Buku Pembantu Pajak. Transport secara default tidak dipotong pajak, tetapi tetap bisa diatur.
 - Master Penerima dipakai ulang agar tidak perlu mengetik nama berulang kali.
 - Tersedia tombol **Salin dari transaksi sebelumnya**, misalnya untuk honor bulanan dengan penerima yang sama.
 
@@ -216,7 +218,28 @@ Tersedia juga **cetak massal**: pilih beberapa baris atau satu bulan, lalu klik 
 - Nomor bukti BKU memakai satu urutan untuk penerimaan, mutasi, dan belanja dalam satu tahun anggaran; urutan mengikuti tanggal transaksi dari paling awal.
 - Tanggal dapat diubah langsung dari kolom Tanggal di BKU. Setelah tanggal disimpan, urutan transaksi, nomor bukti, dan saldo berjalan dihitung ulang otomatis.
 
-### 2.10 Laporan
+### 2.10 Ketentuan Pajak
+
+Aplikasi mengikuti aturan berikut; angka tarif dapat disesuaikan di menu **Tarif pajak**, tetapi logika pemungutannya tetap.
+
+| Pajak | Ketentuan | Dasar hukum |
+|---|---|---|
+| PPN | Dipungut bila rekanan PKP dan nilai **di luar PPN** lebih dari Rp2.000.000. Nilai nota dianggap sudah termasuk PPN, jadi PPN = 11/111 × pembayaran. Tidak dipungut untuk transaksi lewat SIPLah | PMK 59/2022 Pasal 18; PMK 131/2024 jo. PMK 11/2025 |
+| PPh 22 | 1,5% dari nilai di luar PPN, menjadi 3% bila rekanan tanpa NPWP. **Tidak dipungut** untuk pembelian barang dengan dana BOS/BOP, untuk pembayaran ≤ Rp2 juta, dan untuk transaksi SIPLah | PMK 59/2022 Pasal 12; PMK 81/2024 Pasal 219 |
+| PPh 23 | 2% dari bruto untuk sewa harta dan imbalan jasa, menjadi 4% bila rekanan tanpa NPWP. Tidak ada batas minimal | PMK 59/2022 Lampiran VI |
+| PPh 21 PNS | Final: golongan I–II 0%, III 5%, IV 15%, tidak termasuk biaya perjalanan dinas | PP 80/2010 Pasal 4 ayat (2) |
+| PPh 21 bukan pegawai | 50% × bruto × tarif Pasal 17, efektif 2,5% pada lapisan pertama | PMK 168/2023 Pasal 12 ayat (3) |
+| PPh 21 pegawai tidak tetap | Tarif efektif harian: 0% s.d. Rp450.000, 0,5% s.d. Rp2.500.000 sehari; di atas itu 50% × Pasal 17 | PMK 168/2023 Pasal 12 ayat (2); PP 58/2023 Lampiran D |
+| PPh 21 peserta kegiatan | Tarif Pasal 17 atas bruto utuh | PMK 168/2023 Pasal 12 ayat (6) |
+| Bea meterai | Kuitansi/bukti penerimaan uang di atas Rp5.000.000 perlu meterai Rp10.000 | UU 10/2020 Pasal 3 dan 5 |
+
+Catatan penting:
+- PPh 4 ayat (2) — sewa tanah/bangunan 10% dan jasa konstruksi 1,75%–6% — **belum** dihitung otomatis. Bila ada rehab/pemeliharaan lewat penyedia jasa konstruksi, potong manual dan catat di BKU.
+- Aturan lama PPh 21 flat 5%/6% untuk non-ASN sudah dihapus karena tidak punya dasar hukum.
+- Pajak daerah (mis. PBJT makanan/minuman) dipungut oleh restoran sebagai wajib pajak, bukan oleh bendahara.
+
+### 2.11 Laporan
+
 - Buku Kas Umum (BKU).
 - Buku Pembantu Kas Tunai, Buku Pembantu Bank, Buku Pembantu Pajak.
 - Rekap per komponen/SNP.
@@ -225,7 +248,7 @@ Tersedia juga **cetak massal**: pilih beberapa baris atau satu bulan, lalu klik 
 - SPJ lengkap per bulan/tahap (satu PDF).
 - Export Excel untuk semua laporan.
 
-### 2.11 Utilitas
+### 2.12 Utilitas
 - Backup: download file `.sqlite` (+ zip lampiran & uploads kop/TTD); restore: upload file backup.
 - Tutup buku bulanan (mengunci transaksi bulan yang sudah ditutup).
 
@@ -250,11 +273,12 @@ Penerimaan(id, tgl, sumber, tahap, rencanaPendapatanId?, nominal, keterangan)
 
 Toko(id, nama, npwp, alamat, pkp)
 Penerima(id, nama, nip, nik, npwp, kategori[pns|pppk|gtt|ptt|luar], golongan,
+         jenisPenerima[tetap|tidak_tetap|bukan_pegawai|peserta], ptkp[A|B|C],
          jabatan, noHp, alamat, bank, noRekening, atasNama, tarifDefault, aktif)
 
 Belanja(id, noBukti, tgl, rencanaId, jumlahPeriode,
         jenis[barang|honor|transport], tokoId (null utk honor/transport),
-        uraian, metode[tunai|bank], total)
+        uraian, metode[tunai|bank], total, danaBos, viaSiplah)
   ├ ItemBelanja(id, belanjaId, nama, qty, satuan, harga)            # jenis = barang
   ├ PenerimaBelanja(id, belanjaId, penerimaId, nama, nipNik, jabatan,  # jenis = honor/transport
   │                 golongan, npwp, volume, satuan, tarif,            # data penerima di-snapshot

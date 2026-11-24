@@ -9,7 +9,7 @@ import (
 type belanjaItemView struct{ Nama, Volume, Satuan, Harga, PackageVolume string }
 
 type belanjaPenView struct {
-	PenerimaID, Volume, Satuan, Tarif, PackageVolume, Ket string
+	PenerimaID, Volume, Satuan, Tarif, PackageVolume, Ket, Hari string
 }
 
 const batasPajakBarang = 2000000
@@ -141,6 +141,7 @@ func belanjaForm(c *Ctx, row Row) {
 			pens = append(pens, belanjaPenView{
 				PenerimaID: p.Str("penerima_id"), Volume: fmtVol(p.Str("volume")),
 				Satuan: p.Str("satuan"), Tarif: fmtHarga(p.Str("tarif")), Ket: penerimaKet(toInt(p.Str("penerima_id"))),
+				Hari: p.Str("hari"),
 			})
 		}
 	} else {
@@ -159,6 +160,7 @@ func belanjaForm(c *Ctx, row Row) {
 			pens = append(pens, belanjaPenView{
 				PenerimaID: toStr(p["penerima_id"]), Volume: fmtVol(p["volume"]), Satuan: p.S("satuan"),
 				Tarif: fmtHarga(p["tarif"]), PackageVolume: pv, Ket: penerimaKet(p.I("penerima_id")),
+				Hari: fmtVol(p["hari"]),
 			})
 		}
 	}
@@ -185,7 +187,7 @@ func belanjaForm(c *Ctx, row Row) {
 		in = " OR id IN (" + strings.Join(ids, ",") + ")"
 	}
 	list := []Row{}
-	for _, p := range Q.All("SELECT id, nama, nip, npwp, kategori, golongan, jabatan, tarif_default FROM penerima WHERE aktif = 1" + in + " ORDER BY nama") {
+	for _, p := range Q.All("SELECT id, nama, nip, npwp, kategori, golongan, jabatan, tarif_default, jenis_penerima, ptkp FROM penerima WHERE aktif = 1" + in + " ORDER BY nama") {
 		ket := p.S("kategori")
 		if p.S("golongan") != "" {
 			ket += " · Gol " + p.S("golongan")
@@ -195,6 +197,7 @@ func belanjaForm(c *Ctx, row Row) {
 		}
 		p["ket"] = strings.TrimPrefix(ket, " · ")
 		p["pph"] = TarifPPh21(p)
+		p["jenis_pen"] = jenisPenerimaDari(p)
 		list = append(list, p)
 	}
 
@@ -215,15 +218,27 @@ func belanjaForm(c *Ctx, row Row) {
 		lampiran = Q.All("SELECT * FROM lampiran WHERE belanja_id = ? ORDER BY id DESC", editId)
 	}
 	saldo := SaldoKas(toStr(c.OldVal("tgl", row["tgl"])), 0, editId)
+	danaBOS := true
+	viaSiplah := false
+	if posted {
+		danaBOS = c.Old.Truthy("dana_bos") || !c.Old.Has("dana_bos")
+		viaSiplah = c.Old.Truthy("via_siplah")
+	} else if edit {
+		danaBOS = row.I("dana_bos") == 1
+		viaSiplah = row.I("via_siplah") == 1
+	}
 	c.View("belanja/form", D{
 		"title": title, "edit": edit, "row": row,
 		"rencana": rencana, "penerimaList": list,
-		"toko":     Q.All("SELECT id, nama, pkp FROM toko WHERE aktif = 1 OR id = ? ORDER BY nama", row.I("toko_id")),
+		"toko":     Q.All("SELECT id, nama, pkp, npwp FROM toko WHERE aktif = 1 OR id = ? ORDER BY nama", row.I("toko_id")),
 		"lampiran": lampiran,
 		"saldo":    saldo,
 		"tarif":    D{"PPN": TarifPajak("PPN"), "PPH22": TarifPajak("PPH22"), "PPH23": TarifPajak("PPH23")},
-		"batas":    batasPajakBarang,
-		"items":    items, "pens": pens,
+		"batas":    BatasPajakPPN,
+		"batasPPh22": BatasPPh22,
+		"danaBOS":    danaBOS,
+		"viaSiplah":  viaSiplah,
+		"items":      items, "pens": pens,
 		"jenis": jenis, "periode": periode, "satDefault": satDefault,
 		"rencanaVal": rid, "selRencana": sel,
 		"tglVal":     toStr(c.OldVal("tgl", row["tgl"])),

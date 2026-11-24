@@ -80,7 +80,9 @@ var masterResAll = []*MasterRes{
 		Fields: []MasterField{
 			{Name: "nama", Label: "Nama lengkap", Required: true, Hint: "Tulis beserta gelar, seperti di kuitansi.", Span2: true},
 			{Name: "kategori", Label: "Kategori", Type: "select", Options: masterKategori, Default: "GTT"},
-			{Name: "golongan", Label: "Golongan", Type: "select", Options: masterGolongan, Hint: "Menentukan tarif PPh 21 untuk PNS."},
+			{Name: "jenis_penerima", Label: "Jenis penerima (PPh 21)", Type: "select", Options: JenisPenerima, Default: "tidak_tetap", Hint: "Menentukan cara pemotongan PPh 21 menurut PMK 168/2023. PPPK tidak memakai tarif final golongan PNS."},
+			{Name: "ptkp", Label: "Kategori PTKP", Type: "select", Options: PtkpKategori, Default: "A", Hint: "Dipakai untuk tarif efektif bulanan pegawai tetap."},
+			{Name: "golongan", Label: "Golongan", Type: "select", Options: masterGolongan, Hint: "Menentukan tarif final PPh 21 honorarium untuk PNS."},
 			{Name: "nip", Label: "NIP", Type: "digits", Len: 18},
 			{Name: "nik", Label: "NIK", Type: "digits", Len: 16},
 			{Name: "npwp", Label: "NPWP"},
@@ -134,7 +136,7 @@ var masterResAll = []*MasterRes{
 	},
 	{
 		Slug: "pajak", Table: "tarif_pajak", Title: "Tarif pajak", Singular: "tarif pajak",
-		Lead: "Tarif yang dipakai saat menghitung pajak transaksi. Sesuaikan bila aturan daerah Anda berbeda.",
+		Lead: "Tarif yang dipakai saat menghitung pajak transaksi. PPN 11%, PPh 22 1,5%, PPh 23 2%, dan PPh 21 sesuai PMK 168/2023. Sesuaikan bila ada aturan daerah yang berbeda.",
 		Icon: "percent", Order: "kode",
 		Search: []string{"kode", "nama"},
 		List:   []string{"kode", "nama", "tarif", "keterangan"},

@@ -8,7 +8,8 @@
 
 <form class="belanja-form" method="post" action="/belanja{{if .edit}}/{{$row.I "id"}}{{end}}" novalidate data-belanja{{if .edit}} data-edit="1"{{end}}
       data-saldo-tunai="{{.saldo.Tunai}}" data-saldo-bank="{{.saldo.Bank}}"
-      data-tarif-ppn="{{.tarif.PPN}}" data-tarif-pph22="{{.tarif.PPH22}}" data-tarif-pph23="{{.tarif.PPH23}}" data-batas="{{.batas}}">
+      data-tarif-ppn="{{.tarif.PPN}}" data-tarif-pph22="{{.tarif.PPH22}}" data-tarif-pph23="{{.tarif.PPH23}}"
+      data-batas="{{.batas}}" data-batas-pph22="{{.batasPPh22}}" data-pkp="{{if .tokoPKPSelected}}1{{else}}0{{end}}">
   {{$C.CSRFField}}
 
   <div class="belanja-layout">
@@ -46,9 +47,15 @@
           <div class="field" data-only="barang">
             <label for="f-toko_id">Toko / penyedia</label>
             <select class="input" id="f-toko_id" name="toko_id" data-toko>
-              <option value="" data-pkp="0">— Tanpa toko —</option>
-              {{range .toko}}<option value="{{.I "id"}}" data-pkp="{{.I "pkp"}}"{{if eq (str (.I "id")) $.tokoVal}} selected{{end}}>{{.S "nama"}}{{if .I "pkp"}} (PKP){{end}}</option>{{end}}
+              <option value="" data-pkp="0" data-npwp="0">— Tanpa toko —</option>
+              {{range .toko}}<option value="{{.I "id"}}" data-pkp="{{.I "pkp"}}" data-npwp="{{if .S "npwp"}}1{{else}}0{{end}}"{{if eq (str (.I "id")) $.tokoVal}} selected{{end}}>{{.S "nama"}}{{if .I "pkp"}} (PKP){{end}}</option>{{end}}
             </select>
+          </div>
+          <div class="field span-2">
+            <label>Sumber dana</label>
+            <label class="check"><input type="checkbox" name="dana_bos" value="1" data-dana-bos{{if .danaBOS}} checked{{end}}><span>Dana BOS/BOSP — pembelian barang tidak dipungut PPh 22 (PMK 59/2022 Pasal 12 ayat (2) huruf d)</span></label>
+            <label class="check"><input type="checkbox" name="via_siplah" value="1" data-siplah{{if .viaSiplah}} checked{{end}}><span>Transaksi lewat SIPLah — PPN dan PPh 22 dipungut platform</span></label>
+            <span class="hint">Biarkan tidak dicentang bila dana berasal dari sumber lain.</span>
           </div>
         </div>
       </section>
@@ -58,12 +65,14 @@
       <section class="card" data-only="barang" aria-labelledby="h-pajak">
         <div class="card-head"><h2 id="h-pajak">Pajak dipungut</h2></div>
         <div class="card-body">
-          <p class="muted small" style="margin:0 0 12px" data-pajak-saran>PPN dan PPh 22 berlaku bila toko PKP dan nilai transaksi di atas {{rupiah .batas}}.</p>
+          <p class="muted small" style="margin:0 0 12px" data-pajak-saran>PPN dipungut bila rekanan PKP dan nilai di luar PPN di atas {{rupiah .batas}}.</p>
           <div class="tax-list">
-            <label class="check"><input type="checkbox" name="pajak_ppn" value="1" data-pajak="ppn"{{if .chkPPN}} checked{{end}}><span>PPN {{persen .tarif.PPN}}</span><output class="mono" data-pajak-out="ppn">Rp0</output></label>
-            <label class="check"><input type="checkbox" name="pajak_pph22" value="1" data-pajak="pph22"{{if .chkPPH22}} checked{{end}}><span>PPh 22 {{persen .tarif.PPH22}}</span><output class="mono" data-pajak-out="pph22">Rp0</output></label>
-            <label class="check"><input type="checkbox" name="pajak_pph23" value="1" data-pajak="pph23"{{if .chkPPH23}} checked{{end}}><span>PPh 23 {{persen .tarif.PPH23}} (jasa)</span><output class="mono" data-pajak-out="pph23">Rp0</output></label>
+            <label class="check"><input type="checkbox" name="pajak_ppn" value="1" data-pajak="ppn"{{if .chkPPN}} checked{{end}}><span>PPN {{persen .tarif.PPN}} (11/111 dari nota)</span><output class="mono" data-pajak-out="ppn">Rp0</output></label>
+            <label class="check"><input type="checkbox" name="pajak_pph22" value="1" data-pajak="pph22"{{if .chkPPH22}} checked{{end}}><span>PPh 22 <span data-pph22-tarif>{{persen .tarif.PPH22}}</span></span><output class="mono" data-pajak-out="pph22">Rp0</output></label>
+            <label class="check"><input type="checkbox" name="pajak_pph23" value="1" data-pajak="pph23"{{if .chkPPH23}} checked{{end}}><span>PPh 23 <span data-pph23-tarif>{{persen .tarif.PPH23}}</span> (jasa)</span><output class="mono" data-pajak-out="pph23">Rp0</output></label>
           </div>
+          {{with $C.FieldError "pajak_ppn"}}<p class="error" style="margin:8px 0 0">{{.}}</p>{{end}}
+          {{with $C.FieldError "pajak_pph22"}}<p class="error" style="margin:8px 0 0">{{.}}</p>{{end}}
         </div>
       </section>
 

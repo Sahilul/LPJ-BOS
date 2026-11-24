@@ -262,34 +262,22 @@ func SisaRencana(rencanaID, kecuali int64) float64 {
 	return r.F("pagu") - pakai
 }
 
+// TarifPajak mengembalikan tarif tersimpan untuk satu kode pajak.
 func TarifPajak(kode string) float64 {
 	return Q.Float("SELECT tarif FROM tarif_pajak WHERE kode = ?", kode)
 }
 
-// TarifPPh21 (persen) untuk penerima honor berdasarkan kategori, golongan, NPWP.
-func TarifPPh21(p Row) float64 {
-	if p.S("kategori") == "PNS" {
-		gol := strings.ToUpper(strings.TrimSpace(p.S("golongan")))
-		g := ""
-		for _, cand := range []string{"IV", "III", "II", "I"} {
-			if strings.HasPrefix(gol, cand) {
-				next := gol[len(cand):]
-				if next == "" || next[0] < 'A' || next[0] > 'Z' {
-					g = cand
-				}
-				break
-			}
-		}
-		if g == "" {
-			return 0
-		}
-		return TarifPajak("PPH21_GOL_" + g)
+// tokoNPWPAda: rekanan dapat menunjukkan NPWP/NIK, dasar tarif PPh 22 dan PPh 23
+// yang lebih tinggi 100% bila tidak ada (PMK 59/2022 Lampiran V dan VI).
+func tokoNPWPAda(tokoID any) bool {
+	id := toInt(tokoID)
+	if id == 0 {
+		return false
 	}
-	if Digits(p.S("npwp")) != "" {
-		return TarifPajak("PPH21_NPWP")
-	}
-	return TarifPajak("PPH21_NON_NPWP")
+	return Digits(Q.Str("SELECT npwp FROM toko WHERE id = ?", id)) != ""
 }
+
+// TarifPPh21 (persen) untuk penerima honor ada di pajak.go.
 
 type Saldo struct {
 	Tunai float64 `json:"tunai"`
