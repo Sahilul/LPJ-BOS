@@ -29,7 +29,7 @@
         {{end}}
         {{range .rows}}
           <tr{{if or (eq .Class "group") (eq .Class "sub")}} class="group-row"{{else if eq .Class "info"}} class="is-off"{{end}}>
-            {{range .Cells}}<td{{if .Num}} class="num mono"{{else if .Mono}} class="mono"{{end}}>{{if .Rp}}<span style="display:flex;justify-content:space-between;gap:.5em"><span>Rp</span><span>{{.Text}}</span></span>{{else}}{{.Text}}{{end}}</td>{{end}}
+            {{range .Cells}}<td{{if .Num}} class="num mono"{{else if .Mono}} class="mono"{{end}}>{{if .Rp}}<span class="rp-cell"><span>Rp</span><span>{{.Text}}</span></span>{{else}}{{.Text}}{{end}}</td>{{end}}
           </tr>
         {{end}}
       </tbody>

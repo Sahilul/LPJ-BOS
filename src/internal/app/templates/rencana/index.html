@@ -85,9 +85,9 @@
                 {{end}}
               </td>
               <td><span class="badge {{if eq ($r.S "jenis") "barang"}}badge-off{{else}}badge-accent{{end}}">{{if eq ($r.S "jenis") "barang"}}Barang / jasa{{else}}{{if eq ($r.S "jenis") "honor"}}Honor{{else}}Transport{{end}}{{end}}</span></td>
-              <td class="num mono">{{rupiah ($r.F "pagu")}}</td>
-              <td class="num mono">{{if gt ($r.F "realisasi") 0}}{{rupiah ($r.F "realisasi")}}{{else}}<span class="muted">—</span>{{end}}</td>
-              <td class="num mono"><strong{{if le ($r.F "sisa") 0}} class="muted"{{end}}>{{rupiah ($r.F "sisa")}}</strong></td>
+              <td class="num mono">{{rupiahC ($r.F "pagu")}}</td>
+              <td class="num mono">{{if gt ($r.F "realisasi") 0}}{{rupiahC ($r.F "realisasi")}}{{else}}<span class="muted">—</span>{{end}}</td>
+              <td class="num mono"><strong{{if le ($r.F "sisa") 0}} class="muted"{{end}}>{{rupiahC ($r.F "sisa")}}</strong></td>
               <td>
                 <div class="progress{{if ge ($r.I "pct") 100}} is-full{{end}}" role="progressbar" aria-valuenow="{{$r.I "pct"}}" aria-valuemin="0" aria-valuemax="100" aria-label="Realisasi {{$r.S "uraian"}}"><span style="width:{{$r.I "pct"}}%"></span></div>
                 <div class="muted small mono" style="margin-top:4px">{{$r.I "pct"}}%{{if $r.I "n_belanja"}} · {{$r.I "n_belanja"}} transaksi{{end}}</div>

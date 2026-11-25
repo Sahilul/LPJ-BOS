@@ -40,7 +40,7 @@
       <table class="table bku-table">
         <thead><tr><th>Tanggal</th><th>No. bukti</th><th>Uraian</th><th class="num">Debit</th><th class="num">Kredit</th><th class="num">Saldo</th><th><span class="sr-only">Aksi</span></th></tr></thead>
         <tbody>
-          <tr class="group-row"><td colspan="3">Saldo awal {{.bulanNama}}</td><td></td><td></td><td class="num" data-label="Saldo">{{rupiah .saldoAwal.Total}}</td><td></td></tr>
+          <tr class="group-row"><td colspan="3">Saldo awal {{.bulanNama}}</td><td></td><td></td><td class="num" data-label="Saldo">{{rupiahC .saldoAwal.Total}}</td><td></td></tr>
           {{range .rows}}{{$r := .}}
           {{$info := and (le ($r.F "debit") 0) (le ($r.F "kredit") 0)}}
           <tr id="{{$r.S "src"}}-{{$r.I "id"}}"{{if $info}} class="is-off"{{end}}>
@@ -60,9 +60,9 @@
                 {{end}}
               </div>
             </td>
-            <td class="num" data-label="Debit">{{if gt ($r.F "debit") 0}}{{rupiah ($r.F "debit")}}{{end}}</td>
-            <td class="num" data-label="Kredit">{{if gt ($r.F "kredit") 0}}{{rupiah ($r.F "kredit")}}{{end}}</td>
-            <td class="num" data-label="Saldo">{{rupiah ($r.F "saldo")}}</td>
+            <td class="num" data-label="Debit">{{if gt ($r.F "debit") 0}}{{rupiahC ($r.F "debit")}}{{end}}</td>
+            <td class="num" data-label="Kredit">{{if gt ($r.F "kredit") 0}}{{rupiahC ($r.F "kredit")}}{{end}}</td>
+            <td class="num" data-label="Saldo">{{rupiahC ($r.F "saldo")}}</td>
             <td><div class="row-actions">
               {{if eq ($r.S "src") "bel"}}
                 <a class="btn btn-ghost btn-sm" href="/dokumen/belanja/{{$r.I "id"}}/kuitansi.pdf" target="_blank" rel="noopener">Cetak kuitansi</a>
@@ -78,7 +78,7 @@
           </tr>
           {{end}}
         </tbody>
-        <tfoot><tr><td colspan="3">Jumlah {{.bulanNama}}</td><td class="num" data-label="Debit">{{rupiah .debit}}</td><td class="num" data-label="Kredit">{{rupiah .kredit}}</td><td class="num" data-label="Saldo akhir">{{rupiah .saldoAkhir.Total}}</td><td></td></tr></tfoot>
+        <tfoot><tr><td colspan="3">Jumlah {{.bulanNama}}</td><td class="num" data-label="Debit">{{rupiahC .debit}}</td><td class="num" data-label="Kredit">{{rupiahC .kredit}}</td><td class="num" data-label="Saldo akhir">{{rupiahC .saldoAkhir.Total}}</td><td></td></tr></tfoot>
       </table>
     </div>
     <div class="table-foot">Kuitansi tersedia untuk transaksi belanja; daftar bukti terima tersedia untuk honor dan transport.</div>

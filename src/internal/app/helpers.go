@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"math"
 	"os"
 	"path/filepath"
@@ -26,6 +27,19 @@ func RupiahP(v any, prefix bool) string {
 		return "-" + s
 	}
 	return s
+}
+
+// RupiahWeb: "Rp 699.000" dengan spasi tak terputus agar Rp tidak menempel pada angka.
+func RupiahWeb(v any) string {
+	if toFloat(v) < 0 {
+		return "-Rp\u00a0" + RupiahP(v, false)[1:]
+	}
+	return "Rp\u00a0" + RupiahP(v, false)
+}
+
+// RupiahCell: sel tabel bergaya akuntansi, Rp rata kiri dan nominal rata kanan.
+func RupiahCell(v any) template.HTML {
+	return template.HTML(`<span class="rp-cell"><span>Rp</span><span>` + template.HTMLEscapeString(RupiahP(v, false)) + `</span></span>`)
 }
 
 func Angka(v any) string { return NumberFormat(toFloat(v), 0) }

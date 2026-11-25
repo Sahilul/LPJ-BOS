@@ -37,7 +37,7 @@
             <td class="mono">{{tglShort ($r.S "tgl")}}</td>
             <td><span class="badge {{if eq ($r.S "jenis") "tarik"}}badge-accent{{else if eq ($r.S "jenis") "admin_bank"}}badge-warn{{else if eq ($r.S "jenis") "setor"}}badge-ok{{else}}badge-ok{{end}}">{{$r.S "label"}}</span></td>
             <td class="primary"><a href="/mutasi/{{$r.I "id"}}/edit">{{$r.S "uraian"}}</a>{{if $r.S "no_bukti"}}<div class="muted small mono">{{$r.S "no_bukti"}}</div>{{end}}</td>
-            <td class="num">{{rupiah ($r.F "jumlah")}}</td>
+            <td class="num">{{rupiahC ($r.F "jumlah")}}</td>
             <td>
               <div class="row-actions">
                 <a class="btn btn-ghost btn-icon" href="/mutasi/{{$r.I "id"}}/edit" aria-label="Ubah mutasi">{{icon "edit" 16}}</a>

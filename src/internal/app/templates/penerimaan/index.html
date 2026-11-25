@@ -33,7 +33,7 @@
             <td class="primary"><a href="/penerimaan/{{$r.I "id"}}/edit">{{$r.S "uraian"}}</a></td>
             <td><span class="badge badge-accent">{{$r.S "tahap"}}</span></td>
             <td>{{if $r.S "rencana_uraian"}}{{$r.S "rencana_uraian"}}{{else}}<span class="muted">Belum dipasangkan</span>{{end}}</td>
-            <td class="num">{{rupiah ($r.F "jumlah")}}</td>
+            <td class="num">{{rupiahC ($r.F "jumlah")}}</td>
             <td>
               <div class="row-actions">
                 <a class="btn btn-ghost btn-icon" href="/penerimaan/{{$r.I "id"}}/edit" aria-label="Ubah {{$r.S "uraian"}}">{{icon "edit" 16}}</a>

@@ -381,7 +381,7 @@
 
   const uang = (v) => Number(String(v || '').replace(/\D/g, '')) || 0;
   const desimal = (v) => Number(String(v || '').replace(/[\s.]/g, '').replace(',', '.')) || 0;
-  const rp = (n) => (n < 0 ? '−Rp' : 'Rp') + Math.abs(Math.round(n)).toLocaleString('id-ID');
+  const rp = (n) => (n < 0 ? '−Rp\u00a0' : 'Rp\u00a0') + Math.abs(Math.round(n)).toLocaleString('id-ID');
 
   // Paket rencana: jumlah per periode × frekuensi
   document.querySelectorAll('[data-rencana-paket]').forEach((form) => {

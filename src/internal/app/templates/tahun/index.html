@@ -22,7 +22,7 @@
                 {{if and (not $def) (ne $t $aktif)}}<span class="muted small">—</span>{{end}}
               </span>
             </td>
-            <td class="num">{{rupiah (.F "pagu")}}</td>
+            <td class="num">{{rupiahC (.F "pagu")}}</td>
             <td class="small muted">{{if $isi}}{{.I "n_rencana"}} rencana · {{.I "n_belanja"}} belanja · {{.I "n_penerimaan"}} penerimaan{{else}}Masih kosong{{end}}</td>
             <td>
               <div class="row-actions">

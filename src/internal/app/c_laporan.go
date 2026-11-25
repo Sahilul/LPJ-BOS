@@ -75,7 +75,7 @@ func lapSumViews(d *LapData) []lapSumView {
 	for _, s := range d.Summary {
 		v := ""
 		if f, ok := s[1].(float64); ok {
-			v = Rupiah(f)
+			v = RupiahWeb(f)
 		} else {
 			v = toStr(s[1])
 		}

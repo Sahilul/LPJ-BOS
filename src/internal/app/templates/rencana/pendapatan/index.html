@@ -53,12 +53,12 @@
               </div>
             </td>
             <td>{{if $r.I "target_bulan"}}{{bulanIndo ($r.I "target_bulan")}}{{else}}<span class="muted">Belum ditentukan</span>{{end}}</td>
-            <td class="num mono">{{rupiah ($r.F "target_jumlah")}}</td>
+            <td class="num mono">{{rupiahC ($r.F "target_jumlah")}}</td>
             <td class="num mono">
               {{rupiah ($r.F "realisasi")}}
               <div class="progress" role="progressbar" aria-valuenow="{{$r.I "pct"}}" aria-valuemin="0" aria-valuemax="100" aria-label="Realisasi {{$r.S "uraian"}}"><span style="width:{{$r.I "pct"}}%"></span></div>
             </td>
-            <td class="num mono"><strong{{if lt ($r.F "selisih") 0}} style="color:var(--bad)"{{end}}>{{rupiah ($r.F "selisih")}}</strong></td>
+            <td class="num mono"><strong{{if lt ($r.F "selisih") 0}} style="color:var(--bad)"{{end}}>{{rupiahC ($r.F "selisih")}}</strong></td>
             <td>
               <div class="row-actions">
                 <a class="btn btn-ghost btn-icon" href="/penerimaan/baru?rencana_pendapatan={{$r.I "id"}}" title="Catat penerimaan aktual" aria-label="Catat penerimaan aktual untuk {{$r.S "uraian"}}">{{icon "plus" 16}}</a>

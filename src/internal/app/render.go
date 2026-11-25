@@ -205,7 +205,8 @@ func (c *Ctx) CSRFField() template.HTML {
 
 var funcs = template.FuncMap{
 	"icon":      Icon,
-	"rupiah":    Rupiah,
+	"rupiah":    RupiahWeb,
+	"rupiahC":   RupiahCell,
 	"rupiahN":   func(v any) string { return RupiahP(v, false) },
 	"angka":     Angka,
 	"angkaD":    AngkaD,

@@ -573,3 +573,6 @@ form.danger-zone { margin-top: 24px; }
 .year-switch a:hover { color: var(--p-accent); }
 .year-pill { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 13px; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft, #e8f1ee); color: var(--p-accent); }
 @media (max-width: 1024px) { .grid-tahun { grid-template-columns: minmax(0, 1fr); } }
+
+/* Nominal di tabel: Rp rata kiri, angka rata kanan */
+.rp-cell { display: flex; justify-content: space-between; gap: .5em; white-space: nowrap; }
