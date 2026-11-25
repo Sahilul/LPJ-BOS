@@ -48,6 +48,19 @@
       <h2 style="font-size:18px">Cara menghubungkan</h2>
       <p class="small">Alamat server: <code class="mono">{{.url}}</code>. Kirim token di header <code class="mono">Authorization: Bearer …</code>. Contoh konfigurasi (VS Code <code>.vscode/mcp.json</code> memakai kunci <code>servers</code>, Claude/Cursor memakai <code>mcpServers</code>):</p>
       <pre class="mono small" style="white-space:pre-wrap;margin:0;padding:12px;background:var(--p-surface);border-radius:8px">{{.cfg}}</pre>
+      <h3 style="font-size:15px">Claude.ai / Claude Desktop (Tambahkan konektor kustom)</h3>
+      <ol class="small" style="margin:0;padding-left:20px">
+        <li>URL server: <code class="mono">{{.url}}</code></li>
+        <li>Autentikasi: pilih <b>Tanpa masuk</b> (bukan OAuth).</li>
+        <li>Header permintaan, pilih salah satu:
+          <ul style="padding-left:18px">
+            <li>Nama <code class="mono">X-API-Token</code>, nilai <b>token saja</b> (tanpa kata “Bearer”), atau</li>
+            <li>Nama <code class="mono">Authorization</code>, nilai <code class="mono">Bearer &lt;token&gt;</code> (ada kata Bearer + spasi).</li>
+          </ul>
+        </li>
+        <li>Centang <b>Wajib</b>, lalu Tambahkan.</li>
+      </ol>
+      <p class="small muted" style="margin:0">Header lain seperti <code class="mono">X-Auth-Token</code> atau <code class="mono">X-Access-Token</code> tidak dikenali dan akan ditolak (401).</p>
     </div>
 
     <div class="card">
