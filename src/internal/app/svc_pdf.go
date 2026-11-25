@@ -129,31 +129,49 @@ func (k *PdfKit) LapTabel(d *LapData) {
 	}
 	head()
 	pdf.SetFont("Times", "", 9)
+	const lh = 4.6
 	writeRow := func(row Row, bold bool) {
 		style := ""
 		if bold {
 			style = "B"
 		}
 		pdf.SetFont("Times", style, 9)
+		// Teks panjang dibungkus ke baris berikutnya; tinggi baris mengikuti sel terpanjang.
+		cells := make([][]string, len(d.Cols))
+		n := 1
+		for i, c := range d.Cols {
+			cells[i] = k.lapLines(row, c, widths[i])
+			if len(cells[i]) > n {
+				n = len(cells[i])
+			}
+		}
+		h := float64(n)*lh + 1.4
+		if pdf.GetY()+h > k.H-24 {
+			pdf.AddPage()
+			head()
+			pdf.SetFont("Times", style, 9)
+		}
 		if row.S("_class") == "info" {
 			pdf.SetTextColor(120, 120, 120)
 		} else {
 			pdf.SetTextColor(0, 0, 0)
 		}
+		x0, y0 := pdf.GetX(), pdf.GetY()
+		x := x0
 		for i, c := range d.Cols {
 			al := "L"
 			switch c.Type {
 			case "money", "pct":
 				al = "R"
 			}
-			pdf.CellFormat(widths[i], 5.6, k.lapCell(row, c, widths[i]), "B", 0, al, false, 0, "")
+			for j, ln := range cells[i] {
+				pdf.SetXY(x, y0+0.7+float64(j)*lh)
+				pdf.CellFormat(widths[i], lh, ln, "", 0, al, false, 0, "")
+			}
+			x += widths[i]
 		}
-		pdf.Ln(-1)
-		if pdf.GetY() > k.H-24 {
-			pdf.AddPage()
-			head()
-			pdf.SetFont("Times", "", 9)
-		}
+		pdf.Line(x0, y0+h, x, y0+h)
+		pdf.SetXY(x0, y0+h)
 	}
 	for _, row := range d.Rows {
 		writeRow(row, row.S("_class") == "group" || row.S("_class") == "sub")
@@ -187,11 +205,11 @@ func (k *PdfKit) LapTabel(d *LapData) {
 	}
 }
 
-// lapCell: teks sel terformat; teks panjang dipotong agar muat satu baris.
-func (k *PdfKit) lapCell(row Row, c LapCol, w float64) string {
+// lapLines: teks sel terformat; kolom teks dibungkus per baris, kolom lain dipotong agar muat.
+func (k *PdfKit) lapLines(row Row, c LapCol, w float64) []string {
 	v := row[c.Key]
 	if v == nil {
-		return ""
+		return nil
 	}
 	var s string
 	switch c.Type {
@@ -204,7 +222,14 @@ func (k *PdfKit) lapCell(row Row, c LapCol, w float64) string {
 	default:
 		s = toStr(v)
 	}
-	return k.tr(fitText(k.Pdf, s, w-2, "Times", "", 9))
+	if c.Type == "text" {
+		lines := k.Pdf.SplitText(s, w-2)
+		for i := range lines {
+			lines[i] = k.tr(lines[i])
+		}
+		return lines
+	}
+	return []string{k.tr(fitText(k.Pdf, s, w-2, "Times", "", 9))}
 }
 
 // fitText memotong teks dengan elipsis agar muat dalam lebar w pada font tertentu.
