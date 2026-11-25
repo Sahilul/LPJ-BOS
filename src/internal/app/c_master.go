@@ -40,11 +40,21 @@ func masterFind(c *Ctx, r *MasterRes) Row {
 
 // masterValidated menormalkan isian POST sesuai tipe field, lalu memvalidasi.
 func masterValidated(c *Ctx, r *MasterRes, id int64, back string) Row {
+	data, errs := MasterValidate(r, c.Form, id)
+	if len(errs) > 0 {
+		c.WithOld(c.Form, errs)
+		c.Redirect(back)
+	}
+	return data
+}
+
+// MasterValidate menormalkan isian sesuai tipe field lalu memvalidasi (dipakai web dan MCP).
+func MasterValidate(r *MasterRes, form Form, id int64) (Row, map[string]string) {
 	data := Row{}
 	errs := map[string]string{}
 	for i := range r.Fields {
 		f := &r.Fields[i]
-		raw := c.Form.Str(f.Name)
+		raw := form.Str(f.Name)
 		var v any
 		switch f.Type {
 		case "bool":
@@ -84,11 +94,7 @@ func masterValidated(c *Ctx, r *MasterRes, id int64, back string) Row {
 		}
 		data[f.Name] = v
 	}
-	if len(errs) > 0 {
-		c.WithOld(c.Form, errs)
-		c.Redirect(back)
-	}
-	return data
+	return data, errs
 }
 
 // masterDestroy menghapus satu baris; galat FK berarti data sudah dipakai transaksi.
