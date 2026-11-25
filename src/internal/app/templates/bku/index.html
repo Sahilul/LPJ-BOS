@@ -14,19 +14,25 @@
   {{range seq 1 12}}
     <a href="/bku?tahun={{$.tahun}}&amp;bulan={{.}}"{{if eq . $.bulan}} aria-current="page"{{end}}>{{substr (bulanIndo .) 0 3}}{{if index $.perBulan .}}<span class="dot" aria-label="{{index $.perBulan .}} transaksi"></span>{{end}}</a>
   {{end}}
+  <span class="tab-sep" aria-hidden="true"></span>
+  <a href="/bku?periode=T1"{{if eq $.periode "T1"}} aria-current="page"{{end}}>Tahap 1</a>
+  <a href="/bku?periode=T2"{{if eq $.periode "T2"}} aria-current="page"{{end}}>Tahap 2</a>
+  <a href="/bku?periode=Y"{{if eq $.periode "Y"}} aria-current="page"{{end}}>Setahun</a>
 </nav>
 
 <div class="grid grid-4" style="margin-bottom:18px">
-  <div class="card stat"><span class="label">Saldo awal bulan</span><span class="value mono" style="display:block">{{rupiah .saldoAwal.Total}}</span><span class="foot">Per {{tglShort (printf "%04d-%02d-01" .tahun .bulan)}}</span></div>
+  <div class="card stat"><span class="label">Saldo awal{{if .bulanan}} bulan{{end}}</span><span class="value mono" style="display:block">{{rupiah .saldoAwal.Total}}</span><span class="foot">Per {{tglShort (printf "%04d-%02d-01" .tahun .bulan)}}</span></div>
   <div class="card stat"><span class="label">Debit (masuk)</span><span class="value mono" style="display:block">{{rupiah .debit}}</span><span class="foot">Penerimaan &amp; bunga</span></div>
   <div class="card stat"><span class="label">Kredit (keluar)</span><span class="value mono" style="display:block">{{rupiah .kredit}}</span><span class="foot">Belanja &amp; biaya bank</span></div>
-  <div class="card stat"><span class="label">Saldo akhir bulan</span><span class="value mono" style="display:block">{{rupiah .saldoAkhir.Total}}</span><span class="foot">Tunai {{rupiah .saldoAkhir.Tunai}} · Bank {{rupiah .saldoAkhir.Bank}}</span></div>
+  <div class="card stat"><span class="label">Saldo akhir{{if .bulanan}} bulan{{end}}</span><span class="value mono" style="display:block">{{rupiah .saldoAkhir.Total}}</span><span class="foot">Tunai {{rupiah .saldoAkhir.Tunai}} · Bank {{rupiah .saldoAkhir.Bank}}</span></div>
 </div>
 
 <div class="card">
   <form class="toolbar" method="get" action="/bku">
     {{template "partials/tahun-select" .}}
-    <span class="muted small" style="margin-left:auto">{{len .rows}} transaksi bulan ini</span>
+    <span class="muted small" style="margin-left:auto">{{len .rows}} transaksi {{if .bulanan}}bulan ini{{else}}periode ini{{end}}</span>
+    {{if .nKuitansi}}<a class="btn btn-ghost btn-sm" href="/dokumen/bku/kuitansi.pdf?periode={{.periode}}" target="_blank" rel="noopener">{{icon "download" 16}}Cetak semua kuitansi ({{.nKuitansi}})</a>{{end}}
+    {{if .nBukti}}<a class="btn btn-ghost btn-sm" href="/dokumen/bku/bukti-terima.pdf?periode={{.periode}}" target="_blank" rel="noopener">{{icon "download" 16}}Cetak semua tanda terima ({{.nBukti}})</a>{{end}}
   </form>
   {{if not .rows}}
     <div class="empty">

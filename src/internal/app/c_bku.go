@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -13,17 +14,20 @@ var BkuJenisLabel = []Opt{
 
 func bkuIndex(c *Ctx) {
 	tahun := c.TahunAktif()
-	bulan := int(toInt(c.Q("bulan")))
-	if bulan < 1 || bulan > 12 {
-		if ThisYear() == tahun {
-			bulan = int(time.Now().Month())
-		} else {
-			bulan = 1
-		}
+	kode := c.Q("periode")
+	if kode == "" {
+		kode = c.Q("bulan")
 	}
-	awal := fmt.Sprintf("%04d-%02d-01", tahun, bulan)
-	akhir := awal[:8] + fmt.Sprintf("%02d", daysInMonth(tahun, bulan))
-	sebelum := addDays(awal, -1)
+	p, ok := LapPeriode(kode, tahun)
+	if !ok {
+		p, _ = LapPeriode("", tahun)
+	}
+	awal, akhir, sebelum := p.S("awal"), p.S("akhir"), p.S("sebelum")
+	bulan := 0
+	if p["bulanan"] == true {
+		bulan = int(toInt(p.S("kode")))
+	}
+	namaPeriode := strings.TrimSuffix(p.S("label"), fmt.Sprintf(" %d", tahun))
 
 	rows := Q.All(`SELECT * FROM (
             SELECT 'trm' AS src, id, tgl, no_bukti, uraian, jumlah AS debit, 0 AS kredit, 'bank' AS metode, '' AS jenis, jumlah AS nilai, 0 AS lampiran
@@ -65,12 +69,28 @@ func bkuIndex(c *Ctx) {
 		perBulan[int(r.I("m"))] = r.I("n")
 	}
 	c.View("bku/index", D{
-		"title": "Buku kas umum " + BulanIndo(bulan) + fmt.Sprintf(" %d", tahun),
-		"tahun": tahun, "bulan": bulan, "rows": rows,
-		"bulanNama": BulanIndo(bulan),
+		"title": "Buku kas umum " + p.S("label"),
+		"tahun": tahun, "bulan": bulan, "periode": p.S("kode"), "rows": rows,
+		"bulanNama": namaPeriode, "bulanan": p["bulanan"] == true,
+		"nKuitansi": bkuHitungDokumen(rows, false), "nBukti": bkuHitungDokumen(rows, true),
 		"saldoAwal": saldoAwal, "saldoAkhir": SaldoKas(akhir, 0, 0),
 		"debit": debit, "kredit": kredit, "perBulan": perBulan,
 	})
+}
+
+// bkuHitungDokumen: jumlah belanja yang punya kuitansi (atau bukti terima bila bukti=true).
+func bkuHitungDokumen(rows []Row, bukti bool) int {
+	n := 0
+	for _, r := range rows {
+		if r.S("src") != "bel" {
+			continue
+		}
+		if bukti && r.S("jenis") != "honor" && r.S("jenis") != "transport" {
+			continue
+		}
+		n++
+	}
+	return n
 }
 
 func bkuUpdateTgl(c *Ctx) {

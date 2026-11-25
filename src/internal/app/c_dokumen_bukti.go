@@ -24,12 +24,24 @@ func dokBuktiTerima(c *Ctx) {
 
 // buktiTerimaPdf: daftar bukti penerimaan honor/transport siap tanda tangan.
 func buktiTerimaPdf(d Row) []byte {
+	k := NewPdf(false, PdfIdentity(toRow(d["belanja"]).S("tgl")))
+	buktiTerimaTulis(k, d, true)
+	var buf bytes.Buffer
+	_ = k.Output(&buf)
+	return buf.Bytes()
+}
+
+// buktiTerimaTulis menggambar daftar bukti terima ke k; first=false berarti mulai di halaman baru.
+func buktiTerimaTulis(k *PdfKit, d Row, first bool) {
 	b := toRow(d["belanja"])
 	ident := PdfIdentity(b.S("tgl"))
-	k := NewPdf(false, ident)
+	k.Ident = ident
 	pdf := k.Pdf
 	lembaga := k.Lembaga()
 
+	if !first {
+		pdf.AddPage()
+	}
 	k.Kop()
 	pdf.SetFont("Times", "BU", 14)
 	pdf.CellFormat(k.W-28, 7, k.T("DAFTAR BUKTI PENERIMAAN "+strings.ToUpper(d.S("jenisLabel"))), "", 1, "C", false, 0, "")
@@ -164,8 +176,4 @@ func buktiTerimaPdf(d Row) []byte {
 	pdf.SetX(14)
 	pdf.CellFormat(half, 5, k.T(nip(kepala)), "", 0, "C", false, 0, "")
 	pdf.CellFormat(half, 5, k.T(nip(bendahara)), "", 1, "C", false, 0, "")
-
-	var buf bytes.Buffer
-	_ = k.Output(&buf)
-	return buf.Bytes()
 }

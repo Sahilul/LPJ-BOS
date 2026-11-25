@@ -10,8 +10,15 @@ import (
 
 // dokumenData: data belanja + identitas untuk kuitansi/bukti terima.
 func dokumenData(c *Ctx) Row {
-	tahun := c.TahunAktif()
-	id := c.ParamInt("id")
+	d := dokumenDataID(c.TahunAktif(), c.ParamInt("id"))
+	if d == nil {
+		c.Abort(404, "Transaksi tidak ditemukan di tahun anggaran yang sedang dibuka.")
+	}
+	return d
+}
+
+// dokumenDataID: seperti dokumenData; nil bila belanja tidak ada di tahun itu.
+func dokumenDataID(tahun int, id int64) Row {
 	b := Q.One(`SELECT b.*, t.nama AS toko_nama, t.alamat AS toko_alamat, r.uraian AS rencana_uraian,
             r.komponen_kode, r.kegiatan, k.nama AS komponen_nama
          FROM belanja b
@@ -21,7 +28,7 @@ func dokumenData(c *Ctx) Row {
          WHERE b.id = ? AND b.tgl BETWEEN ? AND ?`,
 		id, fmt.Sprintf("%d-01-01", tahun), fmt.Sprintf("%d-12-31", tahun))
 	if b == nil {
-		c.Abort(404, "Transaksi tidak ditemukan di tahun anggaran yang sedang dibuka.")
+		return nil
 	}
 	penerima := Q.All("SELECT * FROM penerima_belanja WHERE belanja_id = ? ORDER BY id", id)
 	s := Sekolah()
@@ -108,8 +115,17 @@ func dokKuitansi(c *Ctx) {
 
 // kuitansiPdf menyusun satu lembar kuitansi per penerima.
 func kuitansiPdf(d Row, receivers []Row) []byte {
+	k := NewPdf(false, PdfIdentity(toRow(d["belanja"]).S("tgl")))
+	kuitansiTulis(k, d, receivers, true)
+	var buf bytes.Buffer
+	_ = k.Output(&buf)
+	return buf.Bytes()
+}
+
+// kuitansiTulis menggambar kuitansi ke k; first=false berarti mulai di halaman baru.
+func kuitansiTulis(k *PdfKit, d Row, receivers []Row, first bool) {
 	ident := PdfIdentity(toRow(d["belanja"]).S("tgl"))
-	k := NewPdf(false, ident)
+	k.Ident = ident
 	pdf := k.Pdf
 	s := toRow(d["sekolah"])
 	b := toRow(d["belanja"])
@@ -129,7 +145,7 @@ func kuitansiPdf(d Row, receivers []Row) []byte {
 	kota := s.S("kabupaten")
 
 	for i, p := range receivers {
-		if i > 0 {
+		if i > 0 || !first {
 			pdf.AddPage()
 		}
 		// Kuitansi sengaja tanpa kop surat: dokumen ini diserahkan per penerima
@@ -306,9 +322,6 @@ func kuitansiPdf(d Row, receivers []Row) []byte {
 		endY := pdf.GetY() + 3
 		pdf.Rect(14, startY-3, k.W-28, endY-(startY-3), "D")
 	}
-	var buf bytes.Buffer
-	_ = k.Output(&buf)
-	return buf.Bytes()
 }
 
 func safeFile(s string) string {
@@ -324,5 +337,61 @@ func init() {
 	Register(85, func(rt *Router) {
 		rt.Get("/dokumen/belanja/{id}/kuitansi.pdf", dokKuitansi)
 		rt.Get("/dokumen/belanja/{id}/bukti-terima.pdf", dokBuktiTerima)
+		rt.Get("/dokumen/bku/kuitansi.pdf", dokBkuMassal(false))
+		rt.Get("/dokumen/bku/bukti-terima.pdf", dokBkuMassal(true))
 	})
+}
+
+// dokBkuMassal: semua kuitansi atau bukti terima belanja dalam satu periode BKU, satu PDF.
+func dokBkuMassal(bukti bool) func(c *Ctx) {
+	return func(c *Ctx) {
+		tahun := c.TahunAktif()
+		p, ok := LapPeriode(c.Q("periode"), tahun)
+		if !ok {
+			c.Abort(404, "Periode tidak dikenal.")
+		}
+		data := bkuDokumenMassal(tahun, p.S("awal"), p.S("akhir"), bukti)
+		jenis := "Kuitansi"
+		if bukti {
+			jenis = "Bukti-Terima"
+		}
+		if len(data) == 0 {
+			c.Abort(404, "Tidak ada "+strings.ReplaceAll(strings.ToLower(jenis), "-", " ")+" pada periode "+p.S("label")+".")
+		}
+		var k *PdfKit
+		for i, d := range data {
+			if k == nil {
+				k = NewPdf(false, PdfIdentity(toRow(d["belanja"]).S("tgl")))
+			}
+			if bukti {
+				buktiTerimaTulis(k, d, i == 0)
+			} else {
+				kuitansiTulis(k, d, kuitansiPenerima(d), i == 0)
+			}
+		}
+		var buf bytes.Buffer
+		_ = k.Output(&buf)
+		c.Download("application/pdf", jenis+"-"+safeFile(p.S("slug"))+".pdf", buf.Bytes(), true)
+	}
+}
+
+// bkuDokumenMassal: data dokumen belanja periode (urut seperti BKU) yang bisa dicetak.
+func bkuDokumenMassal(tahun int, awal, akhir string, bukti bool) []Row {
+	var out []Row
+	for _, r := range Q.All("SELECT id FROM belanja WHERE tgl BETWEEN ? AND ? ORDER BY tgl, id", awal, akhir) {
+		d := dokumenDataID(tahun, r.I("id"))
+		if d == nil {
+			continue
+		}
+		jenis := toRow(d["belanja"]).S("jenis")
+		if bukti {
+			if (jenis != "honor" && jenis != "transport") || len(toRows(d["penerima"])) == 0 {
+				continue
+			}
+		} else if kuitansiPenerima(d) == nil {
+			continue
+		}
+		out = append(out, d)
+	}
+	return out
 }
