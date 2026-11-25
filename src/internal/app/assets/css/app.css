@@ -170,9 +170,9 @@ a.card:hover, .card-link:hover { transform: translateY(-2px); border-color: var(
 .split { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 18px; align-items: start; }
 
 /* ---------- Stats ---------- */
-.stat { padding: 18px 20px; }
+.stat { padding: 18px 20px; min-width: 0; container-type: inline-size; }
 .stat .label { font-size: 13px; color: var(--p-muted); display: flex; align-items: center; gap: 8px; }
-.stat .value { font-size: 32px; letter-spacing: var(--track-xl); margin-top: 10px; line-height: 1; }
+.stat .value { font-size: 32px; font-size: clamp(16px, 10cqi, 32px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: var(--track-xl); margin-top: 10px; line-height: 1; }
 .stat .foot { font-size: 13px; color: var(--p-muted); margin-top: 10px; display: flex; align-items: center; gap: 6px; }
 .stat .foot .ic { transition: transform var(--t) var(--ease); }
 a.stat:hover .foot { color: var(--p-accent); }
