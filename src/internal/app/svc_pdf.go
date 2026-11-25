@@ -233,13 +233,30 @@ func (k *PdfKit) lapLines(row Row, c LapCol, w float64) []string {
 		s = toStr(v)
 	}
 	if c.Type == "text" {
-		lines := k.Pdf.SplitText(s, w-2)
-		for i := range lines {
-			lines[i] = k.tr(lines[i])
-		}
-		return lines
+		return k.splitText(s, w-2)
 	}
 	return []string{k.tr(fitText(k.Pdf, s, w-2, "Times", "", 9))}
+}
+
+// splitText membungkus teks per baris dan mengembalikan baris yang sudah
+// diterjemahkan ke cp1252. SplitText fpdf hanya mengenal rune < 256, jadi teks
+// diterjemahkan dulu (mis. "—" menjadi byte 0x97) lalu tiap byte dipetakan ke rune.
+func (k *PdfKit) splitText(s string, w float64) []string {
+	b := []byte(k.tr(s))
+	r := make([]rune, len(b))
+	for i, c := range b {
+		r[i] = rune(c)
+	}
+	lines := k.Pdf.SplitText(string(r), w)
+	for i, ln := range lines {
+		rs := []rune(ln)
+		out := make([]byte, len(rs))
+		for j, c := range rs {
+			out[j] = byte(c)
+		}
+		lines[i] = string(out)
+	}
+	return lines
 }
 
 // fitText memotong teks dengan elipsis agar muat dalam lebar w pada font tertentu.
