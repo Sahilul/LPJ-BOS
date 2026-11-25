@@ -68,3 +68,18 @@ func TestDownloadMelepasKunciSebelumMenulis(t *testing.T) {
 		t.Fatal("appMu masih dipegang saat body dikirim ke klien")
 	}
 }
+
+func TestKuitansiPenerimaPerwakilanDkk(t *testing.T) {
+	d := Row{"belanja": Row{"jenis": "honor"}, "penerima": []Row{
+		{"nama": "Siti Aminah", "nip": "123", "bruto": 100.0, "netto": 100.0},
+		{"nama": "Budi", "bruto": 50.0, "netto": 50.0},
+	}}
+	r := kuitansiPenerima(d)
+	if len(r) != 1 || r[0].S("nama") != "Siti Aminah, dkk." || r[0].F("netto") != 150 {
+		t.Fatalf("dapat %+v", r)
+	}
+	d["penerima"] = []Row{{"nama": "Siti Aminah", "netto": 100.0}}
+	if n := kuitansiPenerima(d)[0].S("nama"); n != "Siti Aminah" {
+		t.Fatalf("satu penerima tanpa dkk, dapat %q", n)
+	}
+}

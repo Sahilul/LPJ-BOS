@@ -80,11 +80,11 @@ func kuitansiPenerima(d Row) []Row {
 	if len(penerima) == 0 {
 		return nil
 	}
-	nama := "Para penerima sebagaimana daftar terlampir"
-	nip := ""
-	if len(penerima) == 1 {
-		nama = penerima[0].S("nama")
-		nip = penerima[0].S("nip")
+	// Penerima pertama di daftar mewakili; lebih dari satu orang diberi "dkk".
+	nama := penerima[0].S("nama")
+	nip := penerima[0].S("nip")
+	if len(penerima) > 1 {
+		nama += ", dkk."
 	}
 	total := Row{"nama": nama, "nip": nip, "jabatan": "", "bruto": 0.0, "pph21": 0.0, "netto": 0.0}
 	for _, p := range penerima {
