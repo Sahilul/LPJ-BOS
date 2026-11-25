@@ -156,6 +156,9 @@ func Handler() http.Handler {
 		}
 		if r.URL.Query().Get("v") != "" {
 			w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+		} else if strings.HasPrefix(r.URL.Path, "/assets/fonts/") {
+			// Font dipanggil dari CSS tanpa ?v; jarang berubah, cukup disimpan 30 hari.
+			w.Header().Set("Cache-Control", "public, max-age=2592000")
 		}
 		fileServer.ServeHTTP(w, r)
 	}))
