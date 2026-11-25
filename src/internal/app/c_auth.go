@@ -282,6 +282,7 @@ func fileShow(c *Ctx) {
 	h.Set("Content-Length", strconv.Itoa(len(body)))
 	h.Set("Cache-Control", "private, max-age=31536000")
 	c.saveSession()
+	c.releaseLock()
 	c.W.WriteHeader(200)
 	if c.R.Method != "HEAD" {
 		_, _ = c.W.Write(body)

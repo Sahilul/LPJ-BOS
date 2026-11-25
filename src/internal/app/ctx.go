@@ -28,6 +28,21 @@ type Ctx struct {
 	userLoaded bool
 	sekolah    Row
 	written    bool
+
+	// unlock/lockDone melacak appMu agar kunci dilepas sebelum respons
+	// dikirim ke jaringan (klien lambat tidak boleh menahan request lain).
+	unlock   func()
+	lockDone bool
+}
+
+// releaseLock melepas appMu sekali; dipanggil tepat sebelum menulis body.
+func (c *Ctx) releaseLock() {
+	if c.unlock != nil {
+		u := c.unlock
+		c.unlock = nil
+		c.lockDone = true
+		u()
+	}
 }
 
 // Sinyal alur kontrol (ditangkap middleware), pengganti exit; di PHP.
@@ -202,6 +217,7 @@ func (c *Ctx) Q(k string) string { return c.Query.Get(k) }
 
 func (c *Ctx) JSON(code int, v any) {
 	c.W.Header().Set("Content-Type", "application/json; charset=utf-8")
+	c.releaseLock()
 	c.W.WriteHeader(code)
 	_ = json.NewEncoder(c.W).Encode(v)
 	c.Done()
@@ -219,6 +235,7 @@ func (c *Ctx) Download(contentType, filename string, body []byte, inline bool) {
 	h.Set("Content-Length", fmt.Sprint(len(body)))
 	h.Set("Cache-Control", "private, max-age=0, must-revalidate")
 	c.saveSession()
+	c.releaseLock()
 	c.W.WriteHeader(200)
 	_, _ = c.W.Write(body)
 	c.Done()
@@ -229,6 +246,7 @@ func (c *Ctx) Stream(contentType, filename string, r io.Reader) {
 	h.Set("Content-Type", contentType)
 	h.Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
 	c.saveSession()
+	c.releaseLock()
 	c.W.WriteHeader(200)
 	_, _ = io.Copy(c.W, r)
 	c.Done()

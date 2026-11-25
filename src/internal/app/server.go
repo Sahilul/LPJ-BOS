@@ -187,20 +187,16 @@ func serveApp(w http.ResponseWriter, r *http.Request) {
 	c := &Ctx{W: w, R: r, Path: path, Query: r.URL.Query(), Form: Form{}}
 	c.Sess = loadSession(r)
 	// Kunci diambil setelah body terbaca agar upload lambat tidak menahan request lain.
-	var unlock func()
+	defer c.releaseLock()
 	defer func() {
-		if unlock != nil {
-			unlock()
-		}
-	}()
-	defer func() {
-		if unlock == nil {
-			unlock = lockApp(false)
+		if c.unlock == nil && !c.lockDone {
+			c.unlock = lockApp(false)
 		}
 		if rec := recover(); rec != nil {
 			switch s := rec.(type) {
 			case redirectSignal:
 				c.saveSession()
+				c.releaseLock()
 				http.Redirect(w, r, s.to, http.StatusFound)
 			case abortSignal:
 				func() {
@@ -250,7 +246,7 @@ func serveApp(w http.ResponseWriter, r *http.Request) {
 			c.Abort(419, "Sesi formulir sudah kedaluwarsa. Muat ulang halaman lalu coba lagi.")
 		}
 	}
-	unlock = lockApp(r.Method != "GET" && r.Method != "HEAD")
+	c.unlock = lockApp(r.Method != "GET" && r.Method != "HEAD")
 
 	hasUser := Q.Int("SELECT COUNT(*) FROM users") > 0
 	if !hasUser && path != "/setup" {

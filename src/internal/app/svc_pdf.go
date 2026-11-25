@@ -1,10 +1,19 @@
 package app
 
 import (
+	"bytes"
+	"fmt"
+	"image"
+	"image/draw"
+	"image/jpeg"
+	"image/png"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
+
+	xdraw "golang.org/x/image/draw"
 
 	"github.com/go-pdf/fpdf"
 )
@@ -47,6 +56,68 @@ func NewPdf(landscape bool, ident Row) *PdfKit {
 	return k
 }
 
+// pdfKopMaxW: lebar maksimum kop di PDF (±150 dpi pada lebar A4 lanskap).
+const pdfKopMaxW = 1600
+
+var pdfImgMu sync.Mutex
+
+// pdfImagePath mengembalikan salinan gambar yang diperkecil (pdf-cache) agar
+// PDF tidak membawa gambar berukuran megabita; bila gagal, path asli dipakai.
+func pdfImagePath(p string, maxW int) string {
+	if p == "" {
+		return ""
+	}
+	st, err := os.Stat(p)
+	if err != nil {
+		return p
+	}
+	ext := strings.ToLower(filepath.Ext(p))
+	base := strings.TrimSuffix(filepath.Base(p), filepath.Ext(p))
+	dir := filepath.Join(filepath.Dir(p), "pdf-cache")
+	out := filepath.Join(dir, fmt.Sprintf("%s-w%d-%d%s", base, maxW, st.ModTime().Unix(), ext))
+	pdfImgMu.Lock()
+	defer pdfImgMu.Unlock()
+	if _, err := os.Stat(out); err == nil {
+		return out
+	}
+	f, err := os.Open(p)
+	if err != nil {
+		return p
+	}
+	defer f.Close()
+	cfg, format, err := image.DecodeConfig(f)
+	if err != nil || cfg.Width <= maxW || (format != "jpeg" && format != "png") {
+		return p
+	}
+	if _, err := f.Seek(0, io.SeekStart); err != nil {
+		return p
+	}
+	src, _, err := image.Decode(f)
+	if err != nil {
+		return p
+	}
+	nh := max(1, int(float64(cfg.Height)*float64(maxW)/float64(cfg.Width)+0.5))
+	var buf bytes.Buffer
+	if format == "png" {
+		dst := image.NewNRGBA(image.Rect(0, 0, maxW, nh))
+		xdraw.CatmullRom.Scale(dst, dst.Bounds(), src, src.Bounds(), draw.Src, nil)
+		err = (&png.Encoder{CompressionLevel: png.BestCompression}).Encode(&buf, dst)
+	} else {
+		dst := image.NewRGBA(image.Rect(0, 0, maxW, nh))
+		xdraw.CatmullRom.Scale(dst, dst.Bounds(), src, src.Bounds(), draw.Src, nil)
+		err = jpeg.Encode(&buf, dst, &jpeg.Options{Quality: 85})
+	}
+	if err != nil || os.MkdirAll(dir, 0o775) != nil {
+		return p
+	}
+	tmp := out + ".tmp"
+	if os.WriteFile(tmp, buf.Bytes(), 0o664) != nil || os.Rename(tmp, out) != nil {
+		_ = os.Remove(tmp)
+		return p
+	}
+	return out
+}
+
 func (k *PdfKit) T(s string) string { return k.tr(s) }
 
 // ImagePath: path berkas unggahan bila ada, "" bila kosong/hilang.
@@ -65,7 +136,7 @@ func ImagePath(name string) string {
 func (k *PdfKit) Kop() {
 	pdf := k.Pdf
 	s := toRow(k.Ident["sekolah"])
-	if p := ImagePath(k.Ident.S("kop")); p != "" {
+	if p := pdfImagePath(ImagePath(k.Ident.S("kop")), pdfKopMaxW); p != "" {
 		w := k.W - 28
 		h := 20.0
 		if info := pdf.RegisterImageOptions(p, fpdf.ImageOptions{ImageType: imgType(p), ReadDpi: true}); info != nil && info.Width() > 0 {

@@ -345,6 +345,7 @@ func (c *Ctx) View(name string, data D, layout ...string) {
 func (c *Ctx) HTML(code int, body string) {
 	c.W.Header().Set("Content-Type", "text/html; charset=utf-8")
 	c.saveSession()
+	c.releaseLock()
 	c.W.WriteHeader(code)
 	_, _ = c.W.Write([]byte(body))
 	c.Done()
@@ -377,6 +378,7 @@ func (c *Ctx) renderError(code int, msg string) {
 	out := RenderString("layouts/"+lay, data)
 	c.W.Header().Set("Content-Type", "text/html; charset=utf-8")
 	c.saveSession()
+	c.releaseLock()
 	c.W.WriteHeader(code)
 	_, _ = c.W.Write([]byte(out))
 }
