@@ -17,6 +17,7 @@ type lapCellView struct {
 	Text string
 	Num  bool
 	Mono bool
+	Rp   bool
 }
 
 type lapRowView struct {
@@ -38,7 +39,7 @@ func lapViewCell(row Row, c LapCol) lapCellView {
 	}
 	switch c.Type {
 	case "money":
-		out.Text = Rupiah(v)
+		out.Text, out.Rp = RupiahP(v, false), true
 	case "pct":
 		out.Text = Persen(v)
 	case "date":

@@ -166,6 +166,11 @@ func (k *PdfKit) LapTabel(d *LapData) {
 			}
 			for j, ln := range cells[i] {
 				pdf.SetXY(x, y0+0.7+float64(j)*lh)
+				if c.Type == "money" {
+					// Format akuntansi: "Rp" rata kiri, nominal rata kanan.
+					pdf.CellFormat(widths[i], lh, "Rp", "", 0, "L", false, 0, "")
+					pdf.SetXY(x, y0+0.7+float64(j)*lh)
+				}
 				pdf.CellFormat(widths[i], lh, ln, "", 0, al, false, 0, "")
 			}
 			x += widths[i]
@@ -187,18 +192,23 @@ func (k *PdfKit) LapTabel(d *LapData) {
 		pdf.SetFont("Times", "", 10)
 		for _, s := range d.Summary {
 			label := toStr(s[0])
-			val := ""
+			val, rp := "", false
 			switch v := s[1].(type) {
 			case string:
 				val = v
 			case float64:
-				val = Rupiah(v)
+				val, rp = RupiahP(v, false), true
 			default:
 				val = toStr(v)
 			}
 			pdf.SetFont("Times", "B", 10)
 			pdf.CellFormat(70, 5.2, k.T(label), "", 0, "L", false, 0, "")
 			pdf.SetFont("Times", "", 10)
+			if rp {
+				x := pdf.GetX()
+				pdf.CellFormat(45, 5.2, "Rp", "", 0, "L", false, 0, "")
+				pdf.SetX(x)
+			}
 			pdf.CellFormat(45, 5.2, k.T(val), "", 1, "R", false, 0, "")
 		}
 		pdf.Ln(2)
@@ -214,7 +224,7 @@ func (k *PdfKit) lapLines(row Row, c LapCol, w float64) []string {
 	var s string
 	switch c.Type {
 	case "money":
-		s = Rupiah(v)
+		s = RupiahP(v, false)
 	case "pct":
 		s = Persen(v)
 	case "date":
