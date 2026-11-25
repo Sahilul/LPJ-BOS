@@ -208,14 +208,6 @@ func kuitansiPdf(d Row, receivers []Row) []byte {
 			pdf.SetFont("Times", "", 11)
 			pdf.MultiCell(k.W-40-48, 5.4, k.T("Bruto "+Rupiah(p["bruto"])+", PPh 21 "+Rupiah(p["pph21"])), "", "L", false)
 		}
-		// Kuitansi di atas Rp5.000.000 wajib bermeterai (UU 10/2020 Pasal 3 ayat (2) huruf g).
-		if PerluBeaMeterai(p.F("netto")) {
-			pdf.SetX(20 + 48)
-			pdf.SetFont("Times", "I", 10)
-			pdf.MultiCell(k.W-40-48, 5, k.T(fmt.Sprintf("Kuitansi ini melebihi Rp5.000.000 sehingga wajib dibubuhi bea meterai Rp%s.",
-				Angka(TarifBeaMeterai))), "", "L", false)
-			pdf.SetFont("Times", "", 11)
-		}
 		lbl("Sumber Dana", sumber, true)
 
 		// Tanda tangan penerima uang (kanan).
@@ -228,7 +220,21 @@ func kuitansiPdf(d Row, receivers []Row) []byte {
 		pdf.SetX(k.W - 20 - rightW)
 		pdf.SetFont("Times", "", 12)
 		pdf.CellFormat(rightW, 6, k.T(label), "", 1, "C", false, 0, "")
-		pdf.Ln(14)
+		// Kuitansi di atas Rp5.000.000 wajib bermeterai (UU 10/2020 Pasal 3 ayat (2) huruf g):
+		// beri ruang tanda tangan lebih lebar dan tulisan kecil tempat meterai di atas nama.
+		if PerluBeaMeterai(p.F("netto")) {
+			mw, mh := 26.0, 18.0
+			mx := k.W - 20 - rightW/2 - mw/2 - 12
+			my := pdf.GetY() + 2
+			pdf.SetTextColor(130, 130, 130)
+			pdf.SetFont("Times", "", 8)
+			pdf.SetXY(mx, my+mh/2-4)
+			pdf.MultiCell(mw, 4, k.T(fmt.Sprintf("Meterai\nRp%s", Angka(TarifBeaMeterai))), "", "C", false)
+			pdf.SetTextColor(0, 0, 0)
+			pdf.SetY(my + mh + 2)
+		} else {
+			pdf.Ln(14)
+		}
 		pdf.SetX(k.W - 20 - rightW)
 		pdf.SetFont("Times", "B", 12)
 		pdf.CellFormat(rightW, 6, k.T(p.S("nama")), "", 1, "C", false, 0, "")

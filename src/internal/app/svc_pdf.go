@@ -70,8 +70,8 @@ func (k *PdfKit) Kop() {
 		h := 20.0
 		if info := pdf.RegisterImageOptions(p, fpdf.ImageOptions{ImageType: imgType(p), ReadDpi: true}); info != nil && info.Width() > 0 {
 			h = w * info.Height() / info.Width()
-			if h > 24 {
-				h = 24
+			if h > 30 {
+				h = 30
 				w = h * info.Width() / info.Height()
 			}
 		}
