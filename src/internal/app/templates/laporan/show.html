@@ -1,11 +1,11 @@
 {{$C := .C}}{{$p := .p}}{{$d := .data}}<div class="page-head">
   <div>
     <h1>{{.nama}}</h1>
-    <p class="lead">{{$p.S "label"}} · <a href="/laporan?{{.q}}">Kembali ke daftar laporan</a></p>
+    <p class="lead">{{$p.S "label"}} · <a href="/laporan?periode={{$p.S "kode"}}">Kembali ke daftar laporan</a></p>
   </div>
   <div class="actions">
-    <a class="btn btn-ghost" href="/laporan/{{.jenis}}?{{.q}}&amp;format=xlsx">{{icon "download" 16}}Excel</a>
-    <a class="btn" href="/laporan/{{.jenis}}?{{.q}}&amp;format=pdf" target="_blank" rel="noopener">{{icon "file" 16}}Cetak PDF</a>
+    <a class="btn btn-ghost" href="/laporan/{{.jenis}}?periode={{$p.S "kode"}}&amp;format=xlsx">{{icon "download" 16}}Excel</a>
+    <a class="btn" href="/laporan/{{.jenis}}?periode={{$p.S "kode"}}&amp;format=pdf" target="_blank" rel="noopener">{{icon "file" 16}}Cetak PDF</a>
   </div>
 </div>
 

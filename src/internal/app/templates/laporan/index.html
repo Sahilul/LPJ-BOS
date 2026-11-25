@@ -4,8 +4,8 @@
     <p class="lead">{{$p.S "label"}}. Semua laporan disusun otomatis dari BKU, siap dicetak atau diekspor ke Excel.</p>
   </div>
   <div class="actions">
-    <a class="btn btn-ghost" href="/laporan/spj?{{.q}}&amp;format=xlsx">{{icon "download" 16}}SPJ Excel</a>
-    <a class="btn" href="/laporan/spj?{{.q}}" target="_blank" rel="noopener">{{icon "file" 16}}Cetak SPJ lengkap</a>
+    <a class="btn btn-ghost" href="/laporan/spj?periode={{$p.S "kode"}}&amp;format=xlsx">{{icon "download" 16}}SPJ Excel</a>
+    <a class="btn" href="/laporan/spj?periode={{$p.S "kode"}}" target="_blank" rel="noopener">{{icon "file" 16}}Cetak SPJ lengkap</a>
   </div>
 </div>
 
@@ -41,9 +41,9 @@
         </div>
       </div>
       <div class="row-actions" style="justify-content:flex-start;margin-top:auto">
-        <a class="btn btn-sm" href="/laporan/{{.Kode}}?{{$.q}}">{{icon "eye" 14}}Lihat</a>
-        <a class="btn btn-ghost btn-sm" href="/laporan/{{.Kode}}?{{$.q}}&amp;format=pdf" target="_blank" rel="noopener">{{icon "file" 14}}PDF</a>
-        <a class="btn btn-ghost btn-sm" href="/laporan/{{.Kode}}?{{$.q}}&amp;format=xlsx">{{icon "download" 14}}Excel</a>
+        <a class="btn btn-sm" href="/laporan/{{.Kode}}?periode={{$p.S "kode"}}">{{icon "eye" 14}}Lihat</a>
+        <a class="btn btn-ghost btn-sm" href="/laporan/{{.Kode}}?periode={{$p.S "kode"}}&amp;format=pdf" target="_blank" rel="noopener">{{icon "file" 14}}PDF</a>
+        <a class="btn btn-ghost btn-sm" href="/laporan/{{.Kode}}?periode={{$p.S "kode"}}&amp;format=xlsx">{{icon "download" 14}}Excel</a>
       </div>
     </div>
   {{end}}

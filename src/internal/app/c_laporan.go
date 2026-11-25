@@ -3,7 +3,6 @@ package app
 import (
 	"bytes"
 	"fmt"
-	"net/url"
 	"strings"
 )
 
@@ -103,7 +102,7 @@ func laporanIndex(c *Ctx) {
 	nBelanja := Q.Int("SELECT COUNT(*) FROM belanja WHERE tgl BETWEEN ? AND ?", p.S("awal"), p.S("akhir"))
 	c.View("laporan/index", D{
 		"title": "Laporan & SPJ", "tahun": tahun, "p": p, "saldo": saldo,
-		"nTransaksi": n, "nBelanja": nBelanja, "q": "periode=" + url.QueryEscape(p.S("kode")),
+		"nTransaksi": n, "nBelanja": nBelanja,
 		"jenisList": LapJenis,
 	})
 }
@@ -134,7 +133,6 @@ func laporanShow(c *Ctx) {
 		c.View("laporan/show", D{
 			"title": nama + " · " + p.S("label"), "tahun": c.TahunAktif(),
 			"jenis": jenis, "nama": nama, "p": p, "data": d,
-			"q":       "periode=" + url.QueryEscape(p.S("kode")),
 			"headers": lapHeadersOf(d), "rows": lapRowViews(d), "summary": lapSumViews(d),
 		})
 	}
