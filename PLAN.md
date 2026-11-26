@@ -254,11 +254,13 @@ Catatan penting:
 
 ### 2.13 Undangan & Notulen Rapat
 
+*(Selesai — migrasi `012_rapat.sql`, `svc_rapat*.go`, `c_rapat.go`, `svc_pdf_rapat*.go`, `mcp_rapat.go`.)*
+
 Dokumen pendukung SPJ untuk kegiatan rapat (mamin rapat, honor/transport peserta). Setiap undangan/notulen **wajib terkait satu transaksi belanja di BKU**, tidak ada rapat yang berdiri sendiri.
 
 **Alur input**
 1. Menu *Keuangan › Notulen rapat* → **Buat baru**.
-2. Pilih **komponen** terlebih dahulu, lalu pilih **transaksi belanja BKU** pada komponen itu (tahun aktif, belum punya notulen). Bisa juga langsung dari tombol **📝 Notulen** di baris BKU, sehingga komponen dan belanja sudah terpilih.
+2. Pilih **komponen** terlebih dahulu, lalu pilih **transaksi belanja BKU** pada komponen itu (tahun aktif, belum punya notulen). Bisa juga langsung dari tombol **📝** di baris BKU, sehingga komponen dan belanja sudah terpilih (bila rapat sudah ada, langsung dibuka form ubahnya).
 3. Form terisi otomatis dari belanja: tanggal rapat = tanggal belanja, agenda = uraian belanja, tempat = nama sekolah.
 4. Isi undangan: tanggal surat, sifat, lampiran, perihal, kepada (tujuan), hari/tanggal, jam, tempat, agenda.
 5. Isi notulen: pimpinan rapat, notulis, jumlah peserta, pembukaan, pembahasan, keputusan, dan tindak lanjut.
@@ -269,7 +271,7 @@ Dokumen pendukung SPJ untuk kegiatan rapat (mamin rapat, honor/transport peserta
 - Rapat boleh hanya berisi undangan; notulen bisa dilengkapi belakangan. PDF notulen hanya tersedia bila bagian pembahasan sudah diisi.
 
 **Nomor undangan otomatis**
-- Format: `{urut:03}/UND/{NPSN}/{bulan romawi}/{tahun}`, contoh `007/UND/20512345/XI/2026`.
+- Format: `{urut:03}/UND/{NPSN}/{bulan romawi}/{tahun}`, contoh `007/UND/20512345/XI/2026`. Bila NPSN sekolah masih kosong, bagian NPSN dilewati (`007/UND/XI/2026`).
 - Nomor urut per tahun anggaran berdasarkan tanggal surat. Nomor dibuat saat simpan dan tetap bisa diedit manual (nilai unik per tahun).
 
 **Dokumen PDF** (memakai `PdfKit`, kop surat, TTD & stempel kepala)
@@ -278,7 +280,7 @@ Dokumen pendukung SPJ untuk kegiatan rapat (mamin rapat, honor/transport peserta
 - Rute: `/dokumen/rapat/{id}/undangan.pdf`, `/dokumen/rapat/{id}/notulen.pdf`.
 
 **Integrasi**
-- **BKU**: tombol 📝 di baris belanja: *Buat notulen* bila belum ada, *Lihat/Cetak* bila sudah ada.
+- **BKU**: tombol 📝 di baris belanja: *Buat undangan* bila belum ada, *Cetak undangan* bila sudah ada, plus tombol cetak massal *Cetak undangan rapat (n)* di toolbar periode.
 - **SPJ**: bila periode memuat belanja yang punya rapat, PDF SPJ ditambah bagian "Undangan & Notulen" setelah rincian bukti belanja, urut sesuai BKU.
 - **Cetak massal BKU**: `/dokumen/bku/rapat.pdf?periode=…`.
 - **MCP**: `rapat_list`, `rapat_detail`, `rapat_simpan`, `rapat_hapus`.
@@ -384,7 +386,7 @@ LPJ BOS/
 - [x] Fase 6 — SPJ & ekspor (setor pajak/NTPN belum ada UI)
 - [ ] Fase 7 — Penyempurnaan
 - [x] Server MCP untuk asisten AI (lihat di bawah)
-- [ ] Undangan & notulen rapat terkait belanja BKU (lihat 2.13)
+- [x] Undangan & notulen rapat terkait belanja BKU (lihat 2.13)
 
 ### Server MCP (akses AI)
 

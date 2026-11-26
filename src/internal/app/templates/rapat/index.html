@@ -1,0 +1,67 @@
+{{$C := .C}}<div class="page-head">
+  <div>
+    <h1>Undangan &amp; notulen rapat</h1>
+    <p class="lead">Setiap undangan dan notulen terikat pada satu belanja BKU, sehingga bukti rapat langsung masuk ke SPJ.</p>
+  </div>
+  <div class="actions">
+    <a class="btn" href="/rapat/baru">{{icon "plus" 16}}Buat undangan</a>
+  </div>
+</div>
+
+<div class="grid grid-3" style="margin-bottom:18px">
+  <div class="card stat"><span class="label">{{icon "file" 16}}Rapat tahun {{.tahun}}</span><span class="value mono" style="display:block">{{len .rows}}</span><span class="foot">Undangan yang sudah dibuat</span></div>
+  <div class="card stat"><span class="label">{{icon "check" 16}}Notulen lengkap</span><span class="value mono" style="display:block">{{.nNotulen}}</span><span class="foot">Sudah diisi pembahasan rapat</span></div>
+  <div class="card stat"><span class="label">{{icon "cart" 16}}Belanja belum berapat</span><span class="value mono" style="display:block">{{.nKandidat}}</span><span class="foot">Belanja BKU tanpa undangan</span></div>
+</div>
+
+<div class="card">
+  <form class="toolbar" method="get" action="/rapat">
+    {{template "partials/tahun-select" .}}
+    <label class="sr-only" for="f-komponen-filter">Komponen</label>
+    <select class="input" id="f-komponen-filter" name="komponen" data-autosubmit>
+      {{range .komponenOpts}}<option value="{{.K}}"{{if eq .K $.komponen}} selected{{end}}>{{.V}}</option>{{end}}
+    </select>
+    <span class="muted small" style="margin-left:auto">{{len .rows}} rapat</span>
+    {{if .rows}}<a class="btn btn-ghost btn-sm" href="/dokumen/bku/rapat.pdf?periode=Y" target="_blank" rel="noopener">{{icon "download" 16}}Cetak undangan setahun</a>{{end}}
+  </form>
+  {{if not .rows}}
+    <div class="empty">
+      <div class="ic-wrap">{{icon "file" 22}}</div>
+      <h3>Belum ada undangan rapat tahun {{.tahun}}</h3>
+      <p>Pilih komponen lalu belanja BKU yang mendanai rapat; nomor undangan dibuat otomatis.</p>
+      <a class="btn" href="/rapat/baru">{{icon "plus" 16}}Buat undangan</a>
+    </div>
+  {{else}}
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Tanggal</th><th>Nomor undangan</th><th>Perihal &amp; agenda</th><th><span class="sr-only">Aksi</span></th></tr></thead>
+        <tbody>
+          {{range .rows}}{{$r := .}}
+          <tr id="rapat-{{$r.I "id"}}">
+            <td class="mono small" style="white-space:nowrap">{{tglShort ($r.S "tgl")}}<div class="muted">{{$r.S "jam"}}</div></td>
+            <td class="mono small">{{$r.S "no_undangan"}}</td>
+            <td class="primary"><a href="/rapat/{{$r.I "id"}}/edit">{{$r.S "perihal"}}</a>
+              <div class="sub"><span class="badge {{if eq ($r.S "sifat") "Penting"}}badge-warn{{else}}badge-off{{end}}">{{$r.S "sifat"}}</span>
+              {{if index $r "ada_notulen"}}<span class="badge badge-ok">Notulen</span>{{else}}<span class="badge badge-off">Undangan saja</span>{{end}}
+              <span class="muted small">{{$r.S "agenda"}}</span></div>
+              <div class="muted small">{{if $r.S "komponen_nama"}}{{$r.S "komponen_nama"}} · {{end}}<a href="/belanja/{{$r.I "belanja_id"}}/edit">{{$r.S "belanja_uraian"}}</a> · <span class="mono">{{rupiahC ($r.F "belanja_total")}}</span></div>
+            </td>
+            <td>
+              <div class="row-actions">
+                <a class="btn btn-ghost btn-icon" href="/dokumen/rapat/{{$r.I "id"}}/undangan.pdf" target="_blank" rel="noopener" aria-label="Cetak undangan rapat" title="Cetak undangan">{{icon "download" 16}}</a>
+                {{if index $r "ada_notulen"}}<a class="btn btn-ghost btn-icon" href="/dokumen/rapat/{{$r.I "id"}}/notulen.pdf" target="_blank" rel="noopener" aria-label="Cetak notulen rapat" title="Cetak notulen">{{icon "file" 16}}</a>{{end}}
+                <a class="btn btn-ghost btn-icon" href="/rapat/{{$r.I "id"}}/edit" aria-label="Ubah rapat">{{icon "edit" 16}}</a>
+                <form method="post" action="/rapat/{{$r.I "id"}}/hapus" data-confirm="Hapus undangan &amp; notulen rapat ini? Belanja BKU tidak ikut terhapus.">
+                  {{$C.CSRFField}}
+                  <button class="btn btn-danger btn-icon" type="submit" aria-label="Hapus rapat">{{icon "trash" 16}}</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+    <div class="table-foot">{{len .rows}} undangan · {{.nNotulen}} notulen lengkap</div>
+  {{end}}
+</div>

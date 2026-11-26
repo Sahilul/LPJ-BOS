@@ -1,0 +1,56 @@
+{{$C := .C}}{{$row := .row}}{{$v := .vals}}<div class="page-head">
+  <div>
+    <div class="crumb"><a href="/rapat">Undangan &amp; notulen rapat</a><span aria-hidden="true">/</span><span>{{if .edit}}Ubah{{else}}Baru{{end}}</span></div>
+    <h1>{{if .edit}}Ubah undangan &amp; notulen{{else}}Buat undangan &amp; notulen{{end}}</h1>
+    <p class="lead">Tahun anggaran {{.tahun}}. Undangan dan notulen menempel pada satu belanja BKU sebagai dasar penggunaan dana.</p>
+  </div>
+  {{if .edit}}<div class="actions">
+    <a class="btn btn-ghost" href="/dokumen/rapat/{{$row.I "id"}}/undangan.pdf" target="_blank" rel="noopener">{{icon "download" 16}}Undangan PDF</a>
+    {{if $row.S "pembahasan"}}<a class="btn" href="/dokumen/rapat/{{$row.I "id"}}/notulen.pdf" target="_blank" rel="noopener">{{icon "download" 16}}Notulen PDF</a>{{end}}
+  </div>{{end}}
+</div>
+
+<div class="card" style="max-width:860px;margin-bottom:18px">
+  <form class="toolbar" method="get" action="/rapat{{if .edit}}/{{$row.I "id"}}/edit{{end}}">
+    <label for="f-komponen-pilih" class="small muted">Komponen</label>
+    <select class="input" id="f-komponen-pilih" name="komponen" data-autosubmit>
+      {{range .komponenOpts}}<option value="{{.K}}"{{if eq .K $.komponen}} selected{{end}}>{{.V}}</option>{{end}}
+    </select>
+    <span class="muted small" style="margin-left:auto">{{.kandidat}} belanja belum punya undangan</span>
+  </form>
+</div>
+
+{{if and (not .edit) (not .kandidat)}}<div class="card" style="max-width:860px;margin-bottom:18px"><div class="empty"><div class="ic-wrap">{{icon "cart" 22}}</div><h3>Tidak ada belanja yang bisa dipilih</h3><p>Semua belanja pada komponen ini sudah punya undangan, atau belum ada belanja tahun {{.tahun}}. Catat belanja dulu di BKU.</p><a class="btn" href="/belanja/baru">{{icon "plus" 16}}Catat belanja</a></div></div>{{end}}
+
+<form class="card" method="post" action="/rapat{{if .edit}}/{{$row.I "id"}}{{end}}" novalidate style="max-width:860px">
+  {{$C.CSRFField}}
+  <div class="card-body form-grid">
+    <h2 class="span-2" style="margin:0 0 2px;font-size:15px">Dasar belanja</h2>
+    {{$C.Field "name" "belanja_id" "label" "Belanja BKU" "type" "select" "options" .belanjaOpts "value" .belanjaVal "required" true "span2" true "hint" "Hanya belanja pada tahun anggaran ini yang belum punya undangan. Pilih komponen di atas untuk menyaring."}}
+    {{$C.Field "name" "agenda" "label" "Agenda / maksud rapat" "value" (index $v "agenda") "required" true "span2" true}}
+    <h2 class="span-2" style="margin:8px 0 2px;font-size:15px">Surat undangan</h2>
+    {{$C.Field "name" "no_undangan" "label" "Nomor undangan" "value" (index $v "no_undangan") "mono" true "hint" "Dibuat otomatis (urut/UND/NPSN/bulan romawi/tahun); boleh diubah."}}
+    {{$C.Field "name" "sifat" "label" "Sifat" "type" "select" "options" .sifatOpts "value" (index $v "sifat")}}
+    {{$C.Field "name" "tgl_surat" "label" "Tanggal surat" "type" "date" "value" (index $v "tgl_surat") "required" true}}
+    {{$C.Field "name" "lampiran" "label" "Lampiran" "value" (index $v "lampiran") "hint" "Contoh: 1 (satu) lembar"}}
+    {{$C.Field "name" "perihal" "label" "Perihal" "value" (index $v "perihal") "required" true "span2" true}}
+    {{$C.Field "name" "kepada" "label" "Kepada" "value" (index $v "kepada") "type" "textarea" "span2" true}}
+    <h2 class="span-2" style="margin:8px 0 2px;font-size:15px">Pelaksanaan rapat</h2>
+    {{$C.Field "name" "tgl" "label" "Tanggal rapat" "type" "date" "value" (index $v "tgl") "required" true}}
+    {{$C.Field "name" "tempat" "label" "Tempat" "value" (index $v "tempat") "required" true}}
+    {{$C.Field "name" "jam_mulai" "label" "Jam mulai" "value" (index $v "jam_mulai") "extra" "placeholder=\"09:00\"" "hint" "Format HH:MM"}}
+    {{$C.Field "name" "jam_selesai" "label" "Jam selesai" "value" (index $v "jam_selesai") "extra" "placeholder=\"11:00\""}}
+    {{$C.Field "name" "pimpinan" "label" "Pimpinan rapat" "value" (index $v "pimpinan")}}
+    {{$C.Field "name" "notulis" "label" "Notulis" "value" (index $v "notulis")}}
+    {{$C.Field "name" "jumlah_peserta" "label" "Jumlah peserta" "type" "number" "value" (index $v "jumlah_peserta") "extra" "min=\"0\""}}
+    <h2 class="span-2" style="margin:8px 0 2px;font-size:15px">Notulen rapat</h2>
+    {{$C.Field "name" "pembukaan" "label" "Pembukaan" "type" "textarea" "value" (index $v "pembukaan") "span2" true "hint" "Ucapan pembukaan rapat, mis. jam dibuka dan siapa yang membuka."}}
+    {{$C.Field "name" "pembahasan" "label" "Pokok pembahasan" "type" "textarea" "value" (index $v "pembahasan") "span2" true "hint" "Tulis satu pokok bahasan per baris; akan dinomori otomatis. Notulen PDF tersedia setelah bagian ini diisi."}}
+    {{$C.Field "name" "keputusan" "label" "Keputusan rapat" "type" "textarea" "value" (index $v "keputusan") "span2" true}}
+    {{$C.Field "name" "tindak_lanjut" "label" "Tindak lanjut" "type" "textarea" "value" (index $v "tindak_lanjut") "span2" true}}
+  </div>
+  <div class="form-foot">
+    <a class="btn btn-ghost left" href="/rapat">Batal</a>
+    <button class="btn" type="submit">{{icon "check" 16}}{{if .edit}}Simpan perubahan{{else}}Simpan undangan{{end}}</button>
+  </div>
+</form>

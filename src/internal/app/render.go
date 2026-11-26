@@ -393,6 +393,6 @@ var navGroups = []NavGroup{
 	{"Utama", []NavLink{{"/", "home", "Beranda"}}},
 	{"Sekolah", []NavLink{{"/sekolah", "school", "Profil & kop surat"}, {"/pejabat", "badge", "Pejabat & TTD"}}},
 	{"Master data", []NavLink{{"/penerima", "users", "Penerima"}, {"/toko", "store", "Toko & penyedia"}, {"/komponen", "layers", "Komponen BOSP"}, {"/rekening", "hash", "Kode rekening"}, {"/pajak", "percent", "Tarif pajak"}}},
-	{"Keuangan", []NavLink{{"/rencana", "list", "Rencana belanja"}, {"/penerimaan", "inbox", "Penerimaan dana"}, {"/bku", "book", "Buku kas umum"}, {"/mutasi", "swap", "Mutasi kas"}, {"/laporan", "chart", "Laporan & SPJ"}}},
+	{"Keuangan", []NavLink{{"/rencana", "list", "Rencana belanja"}, {"/penerimaan", "inbox", "Penerimaan dana"}, {"/bku", "book", "Buku kas umum"}, {"/mutasi", "swap", "Mutasi kas"}, {"/rapat", "file", "Undangan & notulen"}, {"/laporan", "chart", "Laporan & SPJ"}}},
 	{"Sistem", []NavLink{{"/tahun", "calendar", "Tahun anggaran"}, {"/backup", "database", "Cadangkan data"}, {"/api", "plug", "Akses AI (MCP)"}, {"/akun", "key", "Akun"}}},
 }

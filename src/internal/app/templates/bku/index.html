@@ -33,6 +33,7 @@
     <span class="muted small" style="margin-left:auto">{{len .rows}} transaksi {{if .bulanan}}bulan ini{{else}}periode ini{{end}}</span>
     {{if .nKuitansi}}<a class="btn btn-ghost btn-sm" href="/dokumen/bku/kuitansi.pdf?periode={{.periode}}" target="_blank" rel="noopener">{{icon "download" 16}}Cetak semua kuitansi ({{.nKuitansi}})</a>{{end}}
     {{if .nBukti}}<a class="btn btn-ghost btn-sm" href="/dokumen/bku/bukti-terima.pdf?periode={{.periode}}" target="_blank" rel="noopener">{{icon "download" 16}}Cetak semua tanda terima ({{.nBukti}})</a>{{end}}
+    {{if .nRapat}}<a class="btn btn-ghost btn-sm" href="/dokumen/bku/rapat.pdf?periode={{.periode}}" target="_blank" rel="noopener">{{icon "download" 16}}Cetak undangan rapat ({{.nRapat}})</a>{{end}}
   </form>
   {{if not .rows}}
     <div class="empty">
@@ -77,6 +78,11 @@
                 {{end}}
                 {{if gt ($r.I "lampiran") 0}}
                   <a class="btn btn-ghost btn-sm" href="/belanja/{{$r.I "id"}}/edit#lampiran">Lampiran ({{$r.I "lampiran"}})</a>
+                {{end}}
+                {{if gt ($r.I "rapat_id") 0}}
+                  <a class="btn btn-ghost btn-icon" href="/dokumen/rapat/{{$r.I "rapat_id"}}/undangan.pdf" target="_blank" rel="noopener" aria-label="Cetak undangan rapat belanja ini" title="Undangan &amp; notulen rapat">{{icon "file" 16}}</a>
+                {{else}}
+                  <a class="btn btn-ghost btn-icon" href="/rapat/baru?belanja={{$r.I "id"}}" aria-label="Buat undangan rapat untuk belanja ini" title="Buat undangan &amp; notulen rapat">{{icon "pen" 16}}</a>
                 {{end}}
               {{end}}
               <a class="btn btn-ghost btn-icon" href="{{$r.S "link"}}" aria-label="Ubah {{$r.S "uraian"}}">{{icon "edit" 16}}</a>

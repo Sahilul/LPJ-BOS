@@ -1,0 +1,25 @@
+CREATE TABLE rapat (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tahun INTEGER NOT NULL,
+    belanja_id INTEGER NOT NULL UNIQUE REFERENCES belanja(id) ON DELETE CASCADE,
+    no_undangan TEXT NOT NULL DEFAULT '',
+    tgl_surat TEXT NOT NULL,
+    sifat TEXT NOT NULL DEFAULT 'Penting',
+    lampiran TEXT NOT NULL DEFAULT '-',
+    perihal TEXT NOT NULL DEFAULT 'Undangan Rapat',
+    kepada TEXT NOT NULL DEFAULT '',
+    tgl TEXT NOT NULL,
+    jam_mulai TEXT NOT NULL DEFAULT '',
+    jam_selesai TEXT NOT NULL DEFAULT '',
+    tempat TEXT NOT NULL DEFAULT '',
+    agenda TEXT NOT NULL DEFAULT '',
+    pimpinan TEXT NOT NULL DEFAULT '',
+    notulis TEXT NOT NULL DEFAULT '',
+    jumlah_peserta INTEGER NOT NULL DEFAULT 0,
+    pembukaan TEXT NOT NULL DEFAULT '',
+    pembahasan TEXT NOT NULL DEFAULT '',
+    keputusan TEXT NOT NULL DEFAULT '',
+    tindak_lanjut TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+CREATE INDEX idx_rapat_tahun ON rapat(tahun);

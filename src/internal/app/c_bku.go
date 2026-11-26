@@ -30,17 +30,18 @@ func bkuIndex(c *Ctx) {
 	namaPeriode := strings.TrimSuffix(p.S("label"), fmt.Sprintf(" %d", tahun))
 
 	rows := Q.All(`SELECT * FROM (
-            SELECT 'trm' AS src, id, tgl, no_bukti, uraian, jumlah AS debit, 0 AS kredit, 'bank' AS metode, '' AS jenis, jumlah AS nilai, 0 AS lampiran
+            SELECT 'trm' AS src, id, tgl, no_bukti, uraian, jumlah AS debit, 0 AS kredit, 'bank' AS metode, '' AS jenis, jumlah AS nilai, 0 AS lampiran, 0 AS rapat_id
               FROM penerimaan WHERE tgl BETWEEN ? AND ?
             UNION ALL
             SELECT 'bel', b.id, b.tgl, b.no_bukti, b.uraian, 0, b.total, b.metode, b.jenis, b.total,
-                   (SELECT COUNT(*) FROM lampiran l WHERE l.belanja_id = b.id) AS lampiran
+                   (SELECT COUNT(*) FROM lampiran l WHERE l.belanja_id = b.id) AS lampiran,
+                   (SELECT p.id FROM rapat p WHERE p.belanja_id = b.id) AS rapat_id
               FROM belanja b WHERE b.tgl BETWEEN ? AND ?
             UNION ALL
             SELECT 'mut', id, tgl, no_bukti, uraian,
                    CASE jenis WHEN 'bunga' THEN jumlah ELSE 0 END,
                    CASE jenis WHEN 'admin_bank' THEN jumlah ELSE 0 END,
-                   CASE jenis WHEN 'tarik' THEN 'tunai' ELSE 'bank' END, jenis, jumlah, 0 AS lampiran
+                   CASE jenis WHEN 'tarik' THEN 'tunai' ELSE 'bank' END, jenis, jumlah, 0 AS lampiran, 0 AS rapat_id
               FROM mutasi_kas WHERE tgl BETWEEN ? AND ?
          ) ORDER BY tgl, CASE src WHEN 'trm' THEN 0 WHEN 'mut' THEN 1 ELSE 2 END, id`,
 		awal, akhir, awal, akhir, awal, akhir)
@@ -73,9 +74,21 @@ func bkuIndex(c *Ctx) {
 		"tahun": tahun, "bulan": bulan, "periode": p.S("kode"), "rows": rows,
 		"bulanNama": namaPeriode, "bulanan": p["bulanan"] == true,
 		"nKuitansi": bkuHitungDokumen(rows, false), "nBukti": bkuHitungDokumen(rows, true),
+		"nRapat":    bkuHitungRapat(rows),
 		"saldoAwal": saldoAwal, "saldoAkhir": SaldoKas(akhir, 0, 0),
 		"debit": debit, "kredit": kredit, "perBulan": perBulan,
 	})
+}
+
+// bkuHitungRapat: jumlah transaksi belanja periode ini yang sudah punya undangan rapat.
+func bkuHitungRapat(rows []Row) int {
+	n := 0
+	for _, r := range rows {
+		if r.S("src") == "bel" && r.I("rapat_id") != 0 {
+			n++
+		}
+	}
+	return n
 }
 
 // bkuHitungDokumen: jumlah belanja yang punya kuitansi (atau bukti terima bila bukti=true).

@@ -339,6 +339,9 @@ func init() {
 		rt.Get("/dokumen/belanja/{id}/bukti-terima.pdf", dokBuktiTerima)
 		rt.Get("/dokumen/bku/kuitansi.pdf", dokBkuMassal(false))
 		rt.Get("/dokumen/bku/bukti-terima.pdf", dokBkuMassal(true))
+		rt.Get("/dokumen/bku/rapat.pdf", dokBkuRapat)
+		rt.Get("/dokumen/rapat/{id}/undangan.pdf", dokRapatUndangan)
+		rt.Get("/dokumen/rapat/{id}/notulen.pdf", dokRapatNotulen)
 	})
 }
 

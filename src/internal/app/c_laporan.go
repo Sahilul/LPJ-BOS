@@ -183,6 +183,23 @@ func lapPdf(parts []*LapData, p Row, belanja []Row, spj bool) []byte {
 		k.Kop()
 		k.Judul("RINCIAN BUKTI BELANJA", sub)
 		k.rincianBelanja(belanja)
+		// Undangan & notulen rapat menyusul setelah rincian belanja, hanya
+		// untuk belanja yang memang punya dokumen rapat. Disisipkan tegak
+		// karena berbentuk surat.
+		rapat := rapatUntukBelanja(belanja)
+		for _, d := range rapat {
+			k.rapatPortraitTulis(d, false)
+			if strings.TrimSpace(d.S("pembahasan")) != "" {
+				k.rapatPortraitTulis(d, true)
+			}
+		}
+		if len(rapat) > 0 {
+			// Lembar pengesahan tersendiri: kembali ke orientasi laporan agar
+			// blok tanda tangan SPJ tetap terbaca.
+			k.rapatHalamanKembali(landscape)
+			k.Kop()
+			k.Judul("LEMBAR PENGESAHAN", sub)
+		}
 	}
 	k.TandaTangan(p.S("akhir"), true)
 	var buf bytes.Buffer
