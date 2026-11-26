@@ -243,7 +243,7 @@ func mcpHandle(token Row, msg map[string]any) any {
 			{"protocolVersion", mcpVersi},
 			{"capabilities", OM{{"tools", OM{{"listChanged", false}}}}},
 			{"serverInfo", OM{{"name", "lpjbos"}, {"version", "1.0.0"}}},
-			{"instructions", "Server MCP LPJ BOS: baca dan catat data RKAS, penerimaan, belanja, mutasi kas, BKU, dan laporan BOSP."},
+			{"instructions", "Server MCP LPJ BOS: baca dan catat data RKAS, penerimaan, belanja, mutasi kas, BKU, undangan & notulen rapat, dan laporan BOSP."},
 		})
 	case "ping":
 		return mcpOk(id, struct{}{})

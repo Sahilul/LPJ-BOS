@@ -3,6 +3,46 @@ package app
 // Tool MCP undangan & notulen rapat: daftar, detail, simpan, hapus.
 func init() { RegisterMcp(3, mcpRapatDaftar) }
 
+// mcpRapatTahun: tahun anggaran rapat mengikuti belanja yang mendasarinya
+// (belanja_id baru, lalu rapat lama), baru jatuh ke tgl/param tahun.
+func mcpRapatTahun(a McpArgs, lama Row) (int, error) {
+	bid := a.I("belanja_id")
+	if bid == 0 && lama != nil {
+		bid = lama.I("belanja_id")
+	}
+	if t := rapatTahunBelanja(RapatBelanjaAda(bid)); t != 0 {
+		if !InTahunList(t) {
+			return 0, mcpError("Tahun anggaran %d belum terdaftar. Tambahkan dulu di menu Tahun anggaran.", t)
+		}
+		return t, nil
+	}
+	if lama != nil {
+		return int(lama.I("tahun")), nil
+	}
+	return mcpTahunDari(a, nil)
+}
+
+// rapatMcpDetail: isi rapat + belanja dasar + tautan PDF, tanpa data kop/sekolah.
+func rapatMcpDetail(id int64, tahun int) OM {
+	d := rapatDoc(id, tahun)
+	if d == nil {
+		return nil
+	}
+	out := OM{}
+	for _, k := range []string{"id", "tahun", "belanja_id", "no_undangan", "tgl_surat", "sifat", "lampiran",
+		"perihal", "kepada", "tgl", "jam_mulai", "jam_selesai", "tempat", "agenda", "pimpinan",
+		"notulis", "jumlah_peserta", "pembukaan", "pembahasan", "keputusan", "tindak_lanjut",
+		"no_bukti", "belanja_uraian", "belanja_total", "belanja_tgl", "komponen_kode", "komponen_nama"} {
+		out = append(out, KV{k, d[k]})
+	}
+	notulen := d.S("pembahasan") != ""
+	pdf := OM{{"undangan", "/dokumen/rapat/" + itoa(int(id)) + "/undangan.pdf"}}
+	if notulen {
+		pdf = append(pdf, KV{"notulen", "/dokumen/rapat/" + itoa(int(id)) + "/notulen.pdf"})
+	}
+	return append(out, KV{"ada_notulen", notulen}, KV{"pdf", pdf})
+}
+
 func mcpRapatDaftar() []McpTool {
 	return []McpTool{
 		{
@@ -16,7 +56,7 @@ func mcpRapatDaftar() []McpTool {
 			Handler: func(a McpArgs) (any, error) {
 				tahun := mcpTahun(a)
 				sql := `SELECT p.id, p.tgl, p.tgl_surat, p.no_undangan, p.sifat, p.perihal, p.agenda,
-                        p.tempat, p.jam_mulai, p.jam_selesai, p.belanja_id,
+                        p.tempat, p.jam_mulai, p.jam_selesai, p.belanja_id, p.pembahasan,
                         b.no_bukti, b.uraian AS belanja_uraian, b.total AS belanja_total,
                         r.komponen_kode, k.nama AS komponen_nama
                     FROM rapat p JOIN belanja b ON b.id = p.belanja_id
@@ -29,6 +69,10 @@ func mcpRapatDaftar() []McpTool {
 					args = append(args, k)
 				}
 				rows := Q.All(sql+" ORDER BY p.tgl, p.id", args...)
+				for _, r := range rows {
+					r["ada_notulen"] = r.S("pembahasan") != ""
+					delete(r, "pembahasan")
+				}
 				return OM{{"tahun", tahun}, {"jumlah", len(rows)}, {"rapat", rows}}, nil
 			},
 		},
@@ -43,13 +87,14 @@ func mcpRapatDaftar() []McpTool {
 				if err := mcpWajibAda(row, "Rapat", id); err != nil {
 					return nil, err
 				}
-				return rapatDoc(id, int(row.I("tahun"))), nil
+				return rapatMcpDetail(id, int(row.I("tahun"))), nil
 			},
 		},
 		{
-			Nama:      "rapat_simpan",
-			Akses:     AksesTulis,
-			Deskripsi: "Buat undangan & notulen rapat (tanpa id) atau ubah (dengan id). Rapat wajib terikat pada satu belanja BKU; nomor undangan otomatis bila kosong.",
+			Nama:  "rapat_simpan",
+			Akses: AksesTulis,
+			Deskripsi: "Buat undangan & notulen rapat (tanpa id; belanja_id, tgl, dan agenda wajib) atau ubah sebagian (dengan id; isian yang tidak dikirim tetap). " +
+				"Rapat wajib terikat pada satu belanja BKU dan satu belanja hanya boleh punya satu rapat; nomor undangan otomatis bila kosong.",
 			Skema: mcpObj(OM{
 				{"id", mcpI("Isi untuk mengubah rapat yang sudah ada.")},
 				{"belanja_id", mcpI("ID belanja BKU yang mendanai rapat (wajib).")},
@@ -71,7 +116,7 @@ func mcpRapatDaftar() []McpTool {
 				{"pembahasan", mcpS("Pokok pembahasan; satu pokok per baris. Bila diisi, notulen PDF tersedia.")},
 				{"keputusan", mcpS("Keputusan rapat.")},
 				{"tindak_lanjut", mcpS("Rencana tindak lanjut.")},
-			}, "belanja_id", "tgl"),
+			}),
 			Handler: func(a McpArgs) (any, error) {
 				id := a.I("id")
 				var lama Row
@@ -81,7 +126,7 @@ func mcpRapatDaftar() []McpTool {
 						return nil, err
 					}
 				}
-				tahun, err := mcpTahunDari(a, lama)
+				tahun, err := mcpRapatTahun(a, lama)
 				if err != nil {
 					return nil, err
 				}
@@ -112,7 +157,7 @@ func mcpRapatDaftar() []McpTool {
 				} else {
 					id = RapatCreate(data)
 				}
-				return mcpOkID(id, RapatFind(id)), nil
+				return mcpOkID(id, rapatMcpDetail(id, tahun)), nil
 			},
 		},
 		{

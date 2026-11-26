@@ -79,7 +79,13 @@ func angkaRomawi(n int) string {
 
 // RapatNomorBerikut: nomor undangan otomatis {urut}/UND/{NPSN}/{romawi bulan}/{tahun}.
 func RapatNomorBerikut(tahun int, tglSurat string) string {
+	// Urut = jumlah rapat + 1, lalu dinaikkan sampai belum dipakai (rapat lama
+	// bisa sudah dihapus sehingga COUNT+1 bentrok dengan nomor yang ada).
 	urut := Q.Int("SELECT COUNT(*) FROM rapat WHERE tahun = ?", tahun) + 1
+	for Q.Int("SELECT COUNT(*) FROM rapat WHERE tahun = ? AND no_undangan LIKE ?",
+		tahun, fmt.Sprintf("%03d/%%", urut)) > 0 {
+		urut++
+	}
 	bulan := 1
 	if t, ok := ParseTime(tglSurat); ok {
 		bulan = int(t.Month())

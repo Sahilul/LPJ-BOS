@@ -115,9 +115,10 @@ func buangNomor(s string) string {
 		return s
 	}
 	sisa := s[j:]
-	if strings.HasPrefix(sisa, ")") || strings.HasPrefix(sisa, ".") {
+	// Penanda nomor harus diikuti spasi, agar "1.500 buku" tidak terpotong.
+	if (strings.HasPrefix(sisa, ")") || strings.HasPrefix(sisa, ".")) && len(sisa) > 1 && sisa[1] == ' ' {
 		sisa = strings.TrimSpace(sisa[1:])
-		if sisa != "" && (j-i <= 2 || (j-i == 1 && i == 0)) {
+		if sisa != "" && j-i <= 2 {
 			return sisa
 		}
 	}
