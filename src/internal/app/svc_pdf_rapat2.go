@@ -75,7 +75,6 @@ func rapatNotulenTulis(k *PdfKit, d Row) {
 	bagian("D. Tindak Lanjut", d.S("tindak_lanjut"), 5)
 
 	rapatTandaTangan(k, d, lembaga)
-	rapatDasarBelanja(k, d)
 }
 
 // garisPemisah: garis tipis selebar teks.
@@ -156,15 +155,4 @@ func rapatTandaTangan(k *PdfKit, d Row, lembaga string) {
 		pdf.SetFont("Times", "", 9)
 		pdf.CellFormat(lebar, 4.6, k.T("NIP. "+kepala.S("nip")), "", 1, "C", false, 0, "")
 	}
-}
-
-// rapatDasarBelanja: catatan kecil tentang belanja yang mendanai rapat.
-func rapatDasarBelanja(k *PdfKit, d Row) {
-	pdf := k.Pdf
-	pdf.Ln(6)
-	pdf.SetFont("Times", "I", 8)
-	pdf.SetTextColor(120, 120, 120)
-	pdf.MultiCell(k.W-28, 4, k.T("Dasar belanja: "+TanggalIndo(d.S("belanja_tgl"))+" · "+
-		d.S("no_bukti")+" · "+Rupiah(d["belanja_total"])+" · "+d.S("belanja_uraian")), "", "L", false)
-	pdf.SetTextColor(0, 0, 0)
 }

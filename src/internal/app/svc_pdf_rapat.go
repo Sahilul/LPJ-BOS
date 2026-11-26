@@ -171,13 +171,6 @@ func rapatUndanganTulis(k *PdfKit, d Row) {
 		pdf.SetFont("Times", "", 10)
 		pdf.CellFormat(lebar, 4.6, k.T("NIP. "+kepala.S("nip")), "", 1, "C", false, 0, "")
 	}
-	// Tembusan: dasar belanja yang mendanai rapat.
-	pdf.Ln(6)
-	dasar := fmt.Sprintf("Dasar belanja: %s · %s · %s", TanggalIndo(d.S("belanja_tgl")), d.S("no_bukti"), Rupiah(d["belanja_total"]))
-	pdf.SetFont("Times", "I", 8)
-	pdf.SetTextColor(120, 120, 120)
-	pdf.MultiCell(k.W-28, 4, k.T(dasar), "", "L", false)
-	pdf.SetTextColor(0, 0, 0)
 }
 
 // hariTanggalIndo: "Senin, 5 Januari 2026".
