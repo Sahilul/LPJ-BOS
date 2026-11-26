@@ -224,6 +224,17 @@ func mcpHTTP(w http.ResponseWriter, r *http.Request) {
 
 const mcpVersi = "2024-11-05"
 
+// mcpVersiDipakai: ikuti versi protokol klien bila dikenal (server hanya
+// memakai tools, yang sama di semua versi ini), selain itu versi bawaan.
+func mcpVersiDipakai(params map[string]any) string {
+	v, _ := params["protocolVersion"].(string)
+	switch v {
+	case "2024-11-05", "2025-03-26", "2025-06-18":
+		return v
+	}
+	return mcpVersi
+}
+
 func mcpOk(id any, result any) OM {
 	return OM{{"jsonrpc", "2.0"}, {"id", id}, {"result", result}}
 }
@@ -240,7 +251,7 @@ func mcpHandle(token Row, msg map[string]any) any {
 	switch method {
 	case "initialize":
 		return mcpOk(id, OM{
-			{"protocolVersion", mcpVersi},
+			{"protocolVersion", mcpVersiDipakai(params)},
 			{"capabilities", OM{{"tools", OM{{"listChanged", false}}}}},
 			{"serverInfo", OM{{"name", "lpjbos"}, {"version", "1.0.0"}}},
 			{"instructions", "Server MCP LPJ BOS: baca dan catat data RKAS, penerimaan, belanja, mutasi kas, BKU, undangan & notulen rapat, dan laporan BOSP."},

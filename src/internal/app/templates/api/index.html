@@ -1,7 +1,7 @@
 <div class="page-head">
   <div>
     <h1>Akses AI (MCP)</h1>
-    <p class="lead">Hubungkan asisten AI (Claude, Copilot, Cursor) ke data LPJ BOS lewat Model Context Protocol. Asisten memakai aturan validasi yang sama dengan form di aplikasi ini.</p>
+    <p class="lead">Hubungkan asisten AI (ChatGPT, Claude, Copilot, Cursor) ke data LPJ BOS lewat Model Context Protocol. Asisten memakai aturan validasi yang sama dengan form di aplikasi ini.</p>
   </div>
 </div>
 
@@ -61,6 +61,18 @@
         <li>Centang <b>Wajib</b>, lalu Tambahkan.</li>
       </ol>
       <p class="small muted" style="margin:0">Header lain seperti <code class="mono">X-Auth-Token</code> atau <code class="mono">X-Access-Token</code> tidak dikenali dan akan ditolak (401).</p>
+
+      <h3 style="font-size:15px">ChatGPT (konektor kustom)</h3>
+      <p class="small" style="margin:0">ChatGPT belum bisa mengirim header kustom, jadi token ditaruh di alamat server. Butuh paket <b>Plus/Pro/Business</b> dan domain <b>HTTPS publik</b> (localhost tidak bisa).</p>
+      <ol class="small" style="margin:0;padding-left:20px">
+        <li>Di ChatGPT: <b>Settings → Apps &amp; Connectors → Advanced</b>, nyalakan <b>Developer mode</b>.</li>
+        <li><b>Create connector</b>: nama <code class="mono">LPJ BOS</code>, MCP Server URL:
+          <pre class="mono small" style="white-space:pre-wrap;margin:6px 0;padding:10px;background:var(--p-surface);border-radius:8px">{{.urlChatgpt}}</pre>
+        </li>
+        <li>Authentication: <b>No authentication</b>. Centang <b>I trust this application</b>, lalu Create.</li>
+        <li>Di percakapan baru, klik <b>+</b> → <b>Developer mode</b> → pilih <b>LPJ BOS</b>, lalu minta mis. “Tampilkan BKU bulan ini”.</li>
+      </ol>
+      <p class="small muted" style="margin:0">Alamat di atas memuat token rahasia — jangan dibagikan. Untuk mencatat/menghapus data pakai token <b>Baca &amp; tulis</b>; ChatGPT akan meminta konfirmasi sebelum menjalankan aksi tulis.</p>
     </div>
 
     <div class="card">

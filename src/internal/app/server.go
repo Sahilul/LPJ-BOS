@@ -179,7 +179,8 @@ const maxBody = 55 << 20
 
 func serveApp(w http.ResponseWriter, r *http.Request) {
 	path := "/" + strings.Trim(r.URL.Path, "/")
-	if r.URL.Path == "/mcp" || path == "/mcp" {
+	// /mcp/<token> dipakai klien yang tidak bisa mengirim header kustom (ChatGPT).
+	if r.URL.Path == "/mcp" || path == "/mcp" || strings.HasPrefix(path, "/mcp/") {
 		if McpHandler == nil {
 			http.NotFound(w, r)
 			return

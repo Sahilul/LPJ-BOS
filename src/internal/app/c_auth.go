@@ -488,7 +488,8 @@ func apiIndex(c *Ctx) {
 		baruD = baru
 	}
 	c.View("api/index", D{"title": "Akses AI (MCP)", "tokens": tokens, "log": logs, "baru": baruD, "url": url, "cfg": cfg,
-		"aksesOpts": []Opt{{"baca", "Baca saja"}, {"tulis", "Baca & tulis (bisa mencatat/menghapus)"}}})
+		"urlChatgpt": url + "/" + tok,
+		"aksesOpts":  []Opt{{"baca", "Baca saja"}, {"tulis", "Baca & tulis (bisa mencatat/menghapus)"}}})
 }
 
 func apiStore(c *Ctx) {
@@ -523,12 +524,19 @@ func apiDestroy(c *Ctx) {
 
 var bearerRe = regexp.MustCompile(`(?i)^Bearer\s+(\S+)$`)
 
-// TokenDariHeader membaca token dari Authorization: Bearer … atau X-API-Token.
+// TokenDariHeader membaca token dari Authorization: Bearer …, X-API-Token,
+// atau path /mcp/<token> (untuk klien tanpa header kustom, mis. ChatGPT).
 func TokenDariHeader(r *http.Request) string {
 	if m := bearerRe.FindStringSubmatch(r.Header.Get("Authorization")); m != nil {
 		return m[1]
 	}
-	return strings.TrimSpace(r.Header.Get("X-API-Token"))
+	if t := strings.TrimSpace(r.Header.Get("X-API-Token")); t != "" {
+		return t
+	}
+	if t, ok := strings.CutPrefix(strings.Trim(r.URL.Path, "/"), "mcp/"); ok && !strings.Contains(t, "/") {
+		return strings.TrimSpace(t)
+	}
+	return ""
 }
 
 func SentuhToken(row Row) {
