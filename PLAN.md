@@ -252,6 +252,43 @@ Catatan penting:
 - Backup: download file `.sqlite` (+ zip lampiran & uploads kop/TTD); restore: upload file backup.
 - Tutup buku bulanan (mengunci transaksi bulan yang sudah ditutup).
 
+### 2.13 Undangan & Notulen Rapat
+
+Dokumen pendukung SPJ untuk kegiatan rapat (mamin rapat, honor/transport peserta). Setiap undangan/notulen **wajib terkait satu transaksi belanja di BKU**, tidak ada rapat yang berdiri sendiri.
+
+**Alur input**
+1. Menu *Keuangan › Notulen rapat* → **Buat baru**.
+2. Pilih **komponen** terlebih dahulu, lalu pilih **transaksi belanja BKU** pada komponen itu (tahun aktif, belum punya notulen). Bisa juga langsung dari tombol **📝 Notulen** di baris BKU, sehingga komponen dan belanja sudah terpilih.
+3. Form terisi otomatis dari belanja: tanggal rapat = tanggal belanja, agenda = uraian belanja, tempat = nama sekolah.
+4. Isi undangan: tanggal surat, sifat, lampiran, perihal, kepada (tujuan), hari/tanggal, jam, tempat, agenda.
+5. Isi notulen: pimpinan rapat, notulis, jumlah peserta, pembukaan, pembahasan, keputusan, dan tindak lanjut.
+
+**Aturan**
+- Satu belanja maksimal satu rapat (`UNIQUE(belanja_id)`). Bila belanja dihapus, rapat ikut terhapus (CASCADE).
+- Tanggal surat ≤ tanggal rapat, dan keduanya harus berada di tahun anggaran aktif.
+- Rapat boleh hanya berisi undangan; notulen bisa dilengkapi belakangan. PDF notulen hanya tersedia bila bagian pembahasan sudah diisi.
+
+**Nomor undangan otomatis**
+- Format: `{urut:03}/UND/{NPSN}/{bulan romawi}/{tahun}`, contoh `007/UND/20512345/XI/2026`.
+- Nomor urut per tahun anggaran berdasarkan tanggal surat. Nomor dibuat saat simpan dan tetap bisa diedit manual (nilai unik per tahun).
+
+**Dokumen PDF** (memakai `PdfKit`, kop surat, TTD & stempel kepala)
+- **Undangan**: kop, nomor/sifat/lampiran/perihal, Yth. tujuan, isi (hari, tanggal, jam, tempat, agenda), lalu TTD Kepala Sekolah.
+- **Notulen**: judul, identitas rapat (hari/tanggal, jam, tempat, pimpinan, notulis, peserta, agenda), bagian pembukaan/pembahasan/keputusan/tindak lanjut, lalu TTD notulis (kiri) dan pimpinan/kepala (kanan).
+- Rute: `/dokumen/rapat/{id}/undangan.pdf`, `/dokumen/rapat/{id}/notulen.pdf`.
+
+**Integrasi**
+- **BKU**: tombol 📝 di baris belanja: *Buat notulen* bila belum ada, *Lihat/Cetak* bila sudah ada.
+- **SPJ**: bila periode memuat belanja yang punya rapat, PDF SPJ ditambah bagian "Undangan & Notulen" setelah rincian bukti belanja, urut sesuai BKU.
+- **Cetak massal BKU**: `/dokumen/bku/rapat.pdf?periode=…`.
+- **MCP**: `rapat_list`, `rapat_detail`, `rapat_simpan`, `rapat_hapus`.
+
+**Tahapan**
+1. Migrasi `012_rapat.sql`, `svc_rapat.go` (validasi, nomor otomatis), CRUD `c_rapat.go` + template `rapat/index|form`.
+2. PDF undangan & notulen (`svc_pdf_rapat.go`).
+3. Tombol di BKU, gabung ke SPJ, cetak massal.
+4. Tool MCP + uji (`rapat_test.go`).
+
 ## 3. Model Data
 
 ```text
@@ -285,6 +322,10 @@ Belanja(id, noBukti, tgl, rencanaId, jumlahPeriode,
   │                 bruto, pph21, netto)
   ├ Pajak(id, belanjaId, jenis, dpp, tarif, nilai, tglSetor, ntpn, kodeBilling)
   └ Lampiran(id, belanjaId, namaFile, path)   # file di data/lampiran/
+
+Rapat(id, tahun, belanjaId UNIQUE, noUndangan, tglSurat, sifat, lampiran, perihal, kepada,
+      tgl, jamMulai, jamSelesai, tempat, agenda,
+      pimpinan, notulis, jumlahPeserta, pembukaan, pembahasan, keputusan, tindakLanjut)
 
 MutasiKas(id, tgl, jenis[tarik|setor|admin_bank|bunga], nominal, keterangan)
 TutupBuku(bulan, tahun, saldoTunai, saldoBank, terkunci)
@@ -343,6 +384,7 @@ LPJ BOS/
 - [x] Fase 6 — SPJ & ekspor (setor pajak/NTPN belum ada UI)
 - [ ] Fase 7 — Penyempurnaan
 - [x] Server MCP untuk asisten AI (lihat di bawah)
+- [ ] Undangan & notulen rapat terkait belanja BKU (lihat 2.13)
 
 ### Server MCP (akses AI)
 
