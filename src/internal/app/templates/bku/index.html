@@ -34,6 +34,7 @@
     {{if .nKuitansi}}<a class="btn btn-ghost btn-sm" href="/dokumen/bku/kuitansi.pdf?periode={{.periode}}" target="_blank" rel="noopener">{{icon "download" 16}}Cetak semua kuitansi ({{.nKuitansi}})</a>{{end}}
     {{if .nBukti}}<a class="btn btn-ghost btn-sm" href="/dokumen/bku/bukti-terima.pdf?periode={{.periode}}" target="_blank" rel="noopener">{{icon "download" 16}}Cetak semua tanda terima ({{.nBukti}})</a>{{end}}
     {{if .nRapat}}<a class="btn btn-ghost btn-sm" href="/dokumen/bku/rapat.pdf?periode={{.periode}}" target="_blank" rel="noopener">{{icon "download" 16}}Cetak undangan rapat ({{.nRapat}})</a>{{end}}
+    {{if .nNotulen}}<a class="btn btn-ghost btn-sm" href="/dokumen/bku/rapat.pdf?periode={{.periode}}&amp;jenis=notulen" target="_blank" rel="noopener">{{icon "download" 16}}Cetak notulen rapat ({{.nNotulen}})</a>{{end}}
   </form>
   {{if not .rows}}
     <div class="empty">
@@ -80,7 +81,8 @@
                   <a class="btn btn-ghost btn-sm" href="/belanja/{{$r.I "id"}}/edit#lampiran">Lampiran ({{$r.I "lampiran"}})</a>
                 {{end}}
                 {{if gt ($r.I "rapat_id") 0}}
-                  <a class="btn btn-ghost btn-icon" href="/dokumen/rapat/{{$r.I "rapat_id"}}/undangan.pdf" target="_blank" rel="noopener" aria-label="Cetak undangan rapat belanja ini" title="Undangan &amp; notulen rapat">{{icon "file" 16}}</a>
+                  <a class="btn btn-ghost btn-icon" href="/dokumen/rapat/{{$r.I "rapat_id"}}/undangan.pdf" target="_blank" rel="noopener" aria-label="Cetak undangan rapat belanja ini" title="Cetak undangan rapat">{{icon "file" 16}}</a>
+                  {{if gt ($r.I "rapat_notulen") 0}}<a class="btn btn-ghost btn-icon" href="/dokumen/rapat/{{$r.I "rapat_id"}}/notulen.pdf" target="_blank" rel="noopener" aria-label="Cetak notulen rapat belanja ini" title="Cetak notulen rapat">{{icon "download" 16}}</a>{{end}}
                 {{else}}
                   <a class="btn btn-ghost btn-icon" href="/rapat/baru?belanja={{$r.I "id"}}" aria-label="Buat undangan rapat untuk belanja ini" title="Buat undangan &amp; notulen rapat">{{icon "pen" 16}}</a>
                 {{end}}

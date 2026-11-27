@@ -246,17 +246,21 @@ func mustRapat(t *testing.T, belanjaID int64) Row {
 func TestBkuTombolRapat(t *testing.T) {
 	belanjaID := setupRapat(t)
 	c := &Ctx{Sess: &Session{Data: &SessionData{Tahun: 2026}}}
-	data := func(rapatID int64) D {
+	data := func(rapatID int64, notulen ...bool) D {
+		nNotulen, rn := 0, int64(0)
+		if len(notulen) > 0 && notulen[0] {
+			nNotulen, rn = 1, 1
+		}
 		return D{
 			"tahun": 2026, "bulan": 3, "periode": "3", "bulanNama": "Maret", "bulanan": true,
 			"rows": []Row{{
 				"src": "bel", "id": belanjaID, "tgl": "2026-03-05", "no_bukti": "BKU-001",
 				"uraian": "Konsumsi rapat", "debit": 0.0, "kredit": 500000.0,
 				"metode": "tunai", "jenis": "barang", "nilai": 500000.0, "saldo": 1000000.0,
-				"lampiran": int64(0), "rapat_id": rapatID, "jenis_label": "Barang / jasa",
+				"lampiran": int64(0), "rapat_id": rapatID, "rapat_notulen": rn, "jenis_label": "Barang / jasa",
 				"link": "/belanja/1/edit",
 			}},
-			"nKuitansi": 1, "nBukti": 0, "nRapat": 0,
+			"nKuitansi": 1, "nBukti": 0, "nRapat": 0, "nNotulen": nNotulen,
 			"saldoAwal": Saldo{}, "saldoAkhir": Saldo{}, "debit": 0.0, "kredit": 500000.0,
 			"perBulan": map[int]int64{3: 1}, "C": c,
 		}
@@ -269,5 +273,15 @@ func TestBkuTombolRapat(t *testing.T) {
 	html = RenderString("bku/index", data(id))
 	if !strings.Contains(html, "/dokumen/rapat/"+toStr(id)+"/undangan.pdf") {
 		t.Error("tombol cetak undangan rapat tidak muncul di BKU setelah rapat dibuat")
+	}
+	if strings.Contains(html, "notulen.pdf") || strings.Contains(html, "jenis=notulen") {
+		t.Error("tombol notulen tidak boleh muncul sebelum notulen diisi")
+	}
+	html = RenderString("bku/index", data(id, true))
+	if !strings.Contains(html, "/dokumen/rapat/"+toStr(id)+"/notulen.pdf") {
+		t.Error("tombol cetak notulen per baris tidak muncul di BKU")
+	}
+	if !strings.Contains(html, "/dokumen/bku/rapat.pdf?periode=3&amp;jenis=notulen") {
+		t.Error("tombol cetak semua notulen tidak muncul di BKU")
 	}
 }
