@@ -33,8 +33,8 @@
     <span class="muted small" style="margin-left:auto">{{len .rows}} transaksi {{if .bulanan}}bulan ini{{else}}periode ini{{end}}</span>
     {{if .nKuitansi}}<a class="btn btn-ghost btn-sm" href="/dokumen/bku/kuitansi.pdf?periode={{.periode}}" target="_blank" rel="noopener">{{icon "download" 16}}Cetak semua kuitansi ({{.nKuitansi}})</a>{{end}}
     {{if .nBukti}}<a class="btn btn-ghost btn-sm" href="/dokumen/bku/bukti-terima.pdf?periode={{.periode}}" target="_blank" rel="noopener">{{icon "download" 16}}Cetak semua tanda terima ({{.nBukti}})</a>{{end}}
-    {{if .nRapat}}<a class="btn btn-ghost btn-sm" href="/dokumen/bku/rapat.pdf?periode={{.periode}}" target="_blank" rel="noopener">{{icon "download" 16}}Cetak undangan rapat ({{.nRapat}})</a>{{end}}
-    {{if .nNotulen}}<a class="btn btn-ghost btn-sm" href="/dokumen/bku/rapat.pdf?periode={{.periode}}&amp;jenis=notulen" target="_blank" rel="noopener">{{icon "download" 16}}Cetak notulen rapat ({{.nNotulen}})</a>{{end}}
+    {{if .nRapatTahun}}<a class="btn btn-ghost btn-sm" href="/dokumen/bku/rapat.pdf?periode=Y" target="_blank" rel="noopener">{{icon "download" 16}}Cetak semua undangan tahun ini ({{.nRapatTahun}})</a>{{end}}
+    {{if .nNotulenTahun}}<a class="btn btn-ghost btn-sm" href="/dokumen/bku/rapat.pdf?periode=Y&amp;jenis=notulen" target="_blank" rel="noopener">{{icon "download" 16}}Cetak semua notulen tahun ini ({{.nNotulenTahun}})</a>{{end}}
   </form>
   {{if not .rows}}
     <div class="empty">

@@ -248,6 +248,10 @@ func TestBkuTombolRapat(t *testing.T) {
 	c := &Ctx{Sess: &Session{Data: &SessionData{Tahun: 2026}}}
 	data := func(rapatID int64, notulen ...bool) D {
 		nNotulen, rn := 0, int64(0)
+		nRapatTahun := 0
+		if rapatID > 0 {
+			nRapatTahun = 1
+		}
 		if len(notulen) > 0 && notulen[0] {
 			nNotulen, rn = 1, 1
 		}
@@ -261,6 +265,7 @@ func TestBkuTombolRapat(t *testing.T) {
 				"link": "/belanja/1/edit",
 			}},
 			"nKuitansi": 1, "nBukti": 0, "nRapat": 0, "nNotulen": nNotulen,
+			"nRapatTahun": nRapatTahun, "nNotulenTahun": nNotulen,
 			"saldoAwal": Saldo{}, "saldoAkhir": Saldo{}, "debit": 0.0, "kredit": 500000.0,
 			"perBulan": map[int]int64{3: 1}, "C": c,
 		}
@@ -281,7 +286,7 @@ func TestBkuTombolRapat(t *testing.T) {
 	if !strings.Contains(html, "/dokumen/rapat/"+toStr(id)+"/notulen.pdf") {
 		t.Error("tombol cetak notulen per baris tidak muncul di BKU")
 	}
-	if !strings.Contains(html, "/dokumen/bku/rapat.pdf?periode=3&amp;jenis=notulen") {
-		t.Error("tombol cetak semua notulen tidak muncul di BKU")
+	if !strings.Contains(html, "/dokumen/bku/rapat.pdf?periode=Y&amp;jenis=notulen") {
+		t.Error("tombol cetak notulen tahunan tidak muncul di BKU")
 	}
 }

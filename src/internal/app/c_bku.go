@@ -76,9 +76,21 @@ func bkuIndex(c *Ctx) {
 		"bulanNama": namaPeriode, "bulanan": p["bulanan"] == true,
 		"nKuitansi": bkuHitungDokumen(rows, false), "nBukti": bkuHitungDokumen(rows, true),
 		"nRapat": bkuHitungRapat(rows, false), "nNotulen": bkuHitungRapat(rows, true),
+		"nRapatTahun": bkuHitungRapatTahun(tahun, false), "nNotulenTahun": bkuHitungRapatTahun(tahun, true),
 		"saldoAwal": saldoAwal, "saldoAkhir": SaldoKas(akhir, 0, 0),
 		"debit": debit, "kredit": kredit, "perBulan": perBulan,
 	})
+}
+
+func bkuHitungRapatTahun(tahun int, notulen bool) int {
+	p, _ := LapPeriode("Y", tahun)
+	sql := `SELECT COUNT(*) AS n FROM rapat p JOIN belanja b ON b.id = p.belanja_id
+        WHERE p.tahun = ? AND b.tgl BETWEEN ? AND ?`
+	args := []any{tahun, p.S("awal"), p.S("akhir")}
+	if notulen {
+		sql += " AND TRIM(p.pembahasan) <> ''"
+	}
+	return int(Q.One(sql, args...).I("n"))
 }
 
 // bkuHitungRapat: jumlah transaksi belanja periode ini yang sudah punya undangan rapat
